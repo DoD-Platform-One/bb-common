@@ -4,8 +4,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [0.0.0-bb.0] - YYYY-MM-DD
+## [0.1.0] - 2025-05-28
 
-### Changetype (<https://keepachangelog.com/en/1.0.0/#how>)
+### Added
 
-- Brief description of changes
+- Initial templating for network policies
+- Documentation on new library chart

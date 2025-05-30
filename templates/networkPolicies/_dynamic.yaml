@@ -1,0 +1,87 @@
+{{- define "bb-common.netpols.dynamic" }}
+{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.bundled.kubeApiAccess.enabled}}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kube-api-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bb-common.label" .  | indent 4}}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+  {{- range .Values.networkPolicies.bundled.kubeApiAccess.controlPlaneCidr }}
+    - ipBlock:
+        cidr: {{ . }}
+        {{- include "bb-common.metadataExclude" . | indent 8 }}
+  {{- end -}}
+{{- end }}
+{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.bundled.dynamic.enabled }}
+{{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingressGateway }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istio-gateway-ingress
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "bb-common.label" .  | indent 4}}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            {{- if .Values.networkPolicies.istioNamespaceSelector }}
+            app.kubernetes.io/name: {{ .Values.networkPolicies.istioNamespaceSelector.ingress }}
+            {{- else }}
+            app.kubernetes.io/name: "istio-controlplane"
+            {{- end }}
+        podSelector:
+          matchLabels:
+            {{- toYaml .Values.networkPolicies.ingressLabels | nindent 12}}
+      ports:
+      {{- range .Values.networkPolicies.bundled.dynamic.ingressGateway }}
+        - port: {{ .port }}
+          {{- if .protocol }}
+          protocol: {{ .protocol }}
+          {{- end }}
+      {{- end }}
+{{- end }}
+{{- if or (and .Values.sso .Values.sso.enabled) (and .Values.authservice .Values.authservice.enabled) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-sso-egress
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "bb-common.label" . | indent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+  {{- if .Values.networkPolicies.bundled.dynamic.ssoCidr }}
+  {{- range .Values.networkPolicies.bundled.dynamic.ssoCidr }}
+    - ipBlock:
+        cidr: {{ . }}
+        {{- include "bb-common.metadataExclude" . | indent 8 }}
+  {{- end -}}
+  {{- else }}
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        # Block requests to Metadata endpoints used by cloud environments
+        except:
+        - 169.254.169.254/32
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
