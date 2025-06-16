@@ -1,5 +1,5 @@
 {{- define "bb-common.netpols.conditional" }}
-{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.bundled.conditional.enabled }}
+{{- if .Values.networkPolicies.bundled.conditional.enabled }}
 {{- if and .Values.bbtests .Values.bbtests.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
