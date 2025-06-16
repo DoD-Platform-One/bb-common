@@ -1,10 +1,10 @@
 ## Purpose
 
-The purpose of this library chart is to reduce the amount of code duplication that exists across all packages.  Additionally, it should allow us to more quickly update resources that are shared and onboard new packages quickly.
+The purpose of this chart is to reduce the amount of code duplication that exists across all packages.  Additionally, it should allow us to more quickly update resources that are shared and onboard new packages quickly.
 
 ### bb-common Library Chart Integration
 
-In order to make use of this library chart, simply add the following to your package's chart.yaml:
+In order to make use of this chart, simply add the following to your package's chart.yaml:
 
 ```
 dependencies:
@@ -20,10 +20,12 @@ Once the file has been added, change to the `chart` directory for your package a
 
 `helm dep update`
 
-The final step for integrating this library chart is to create a directory called `common` under your templates folder, and then create a file called `bigbang.yaml` with the following contents:
+The final step for integrating this library chart is to create a file called common.yaml under your templates/bigbang folder with the following contents:
 
 ```
+{{- if .Values.networkPolicies.enabled }}
 {{- include "bb-common.netpols.all" . }}
+{{- end }}
 ```
 
 The package should now be using all shared network policies and will now have the ability to use shorthand network policies for any package specific policies.

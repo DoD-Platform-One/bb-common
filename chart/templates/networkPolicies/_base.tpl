@@ -1,5 +1,5 @@
 {{- define "bb-common.netpols.base" }}
-{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.bundled.base.enabled }}
+{{- if .Values.networkPolicies.bundled.base.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

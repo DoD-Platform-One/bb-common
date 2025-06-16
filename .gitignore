@@ -33,4 +33,6 @@ ignore/*
 # Local History for Visual Studio Code
 .history/
 
-
+# Ignore helm unittest artifacts
+chart/.debug/
+chart/tests/__snapshot__

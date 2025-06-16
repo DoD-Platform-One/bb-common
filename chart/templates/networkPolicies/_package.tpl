@@ -1,5 +1,5 @@
 {{- define "bb-common.netpols.package" }}
-{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.package }}
+{{- if .Values.networkPolicies.package }}
 {{- range $name, $policy := .Values.networkPolicies.package }}
 {{- if $policy.enabled }}
 ---

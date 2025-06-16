@@ -1,5 +1,5 @@
 {{- define "bb-common.netpols.dynamic" }}
-{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.bundled.kubeApiAccess.enabled}}
+{{- if .Values.networkPolicies.bundled.kubeApiAccess.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -20,7 +20,7 @@ spec:
         {{- include "bb-common.metadataExclude" . | indent 8 }}
   {{- end -}}
 {{- end }}
-{{- if and .Values.networkPolicies.enabled .Values.networkPolicies.bundled.dynamic.enabled }}
+{{- if .Values.networkPolicies.bundled.dynamic.enabled }}
 {{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingressGateway }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -78,7 +78,6 @@ spec:
   {{- else }}
     - ipBlock:
         cidr: 0.0.0.0/0
-        # Block requests to Metadata endpoints used by cloud environments
         except:
         - 169.254.169.254/32
   {{- end }}
