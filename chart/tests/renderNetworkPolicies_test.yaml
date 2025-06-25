@@ -5,6 +5,7 @@ templates:
 tests:
   - it: should contain no network policies when disabled
     set:
+      istio.enabled: false
       networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
@@ -12,6 +13,7 @@ tests:
           count: 0
   - it: should contain network policy named "allow-kube-dns-egress"
     set:
+      istio.enabled: false
       networkPolicies.tests.enabled: true
     documentIndex: 0
     asserts:
@@ -20,6 +22,7 @@ tests:
           value: allow-kube-dns-egress
   - it: should contain network policy named "deny-all"
     set:
+      istio.enabled: false
       networkPolicies.tests.enabled: true
     documentIndex: 1
     asserts:
@@ -28,6 +31,7 @@ tests:
           value: deny-all
   - it: should contain network policy named "allow-intranamespace"
     set:
+      istio.enabled: false
       networkPolicies.tests.enabled: true
     documentIndex: 2
     asserts:
@@ -36,8 +40,9 @@ tests:
           value: allow-intranamespace
   - it: should contain network policy named to allow helm test egress when bbtests is enabled
     set:
-      networkPolicies.tests.enabled: true
       bbtests.enabled: true
+      istio.enabled: false
+      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -58,10 +63,10 @@ tests:
           content:
             namespaceSelector:
               matchLabels:
-                app.kubernetes.io/name: istio-system
+                kubernetes.io/metadata.name: istio-system
             podSelector:
               matchLabels:
-                app: istiod
+                app.kubernetes.io/name: istiod
       - equal:
           path: spec.egress[0].ports
           value:
@@ -85,20 +90,49 @@ tests:
           content:
             namespaceSelector:
               matchLabels:
-                app.kubernetes.io/name: monitoring
+                kubernetes.io/metadata.name: monitoring
             podSelector:
               matchLabels:
-                app: prometheus
+                app.kubernetes.io/name: prometheus
       - equal:
           path: spec.ingress[0].ports
           value:
             - port: 15020
               protocol: TCP
-  - it: should contain network policy to allow tracing egress with correct ports and selectors when tracing is enabled
+  - it: should contain network policy to allow prometheus ingress with correct ports and selectors when istio and monitoring are enabled
+    documentIndex: 1
     set:
+      istio.enabled: true
+      monitoring.enabled: true
+      redis.enabled: true
       networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-prometheus-ingress
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: monitoring
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: prometheus
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 15020
+              protocol: TCP
+            - port: 9121
+              protocol: TCP
+  - it: should contain network policy to allow tracing egress with correct ports and selectors when tracing is enabled
+    set:
+      istio.enabled: false
       tracing.enabled: true
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
           path: metadata.name
@@ -108,7 +142,7 @@ tests:
           content:
             namespaceSelector:
               matchLabels:
-                app.kubernetes.io/name: tempo
+                kubernetes.io/metadata.name: tempo
             podSelector:
               matchLabels:
                 app.kubernetes.io/name: tempo
@@ -118,6 +152,7 @@ tests:
             - port: 9411
   - it: should contain network policy to allow kube api egress with correct cidr when kubApiAccess is enabled
     set:
+      istio.enabled: false
       networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.kubeApiAccess.enabled: true
@@ -144,7 +179,7 @@ tests:
         istio: ingressgateway
         app.kubernetes.io/name: public-ingressgateway
       networkPolicies.istioNamespaceSelector.ingress: istio-gateway
-      networkPolicies.bundled.dynamic.ingressGateway:
+      networkPolicies.bundled.dynamic.ingressGatewayPorts:
         - port: 20001
           protocol: TCP
         - port: 20002
@@ -157,7 +192,7 @@ tests:
           content:
             namespaceSelector:
               matchLabels:
-                app.kubernetes.io/name: istio-gateway
+                kubernetes.io/metadata.name: istio-gateway
             podSelector:
               matchLabels:
                 istio: ingressgateway
@@ -202,6 +237,52 @@ tests:
                cidr: 0.0.0.0/0
                except:
                - 169.254.169.254/32
+  - it: should contain network policy to allow inbound metrics with the correct specified port
+    set:
+      monitoring.enabled: true
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.bundled.dynamic.metricsPorts:
+        - port: 1234
+          protocol: TCP
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-monitoring-metrics-ingress
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: monitoring
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: prometheus
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 1234
+              protocol: TCP
+  - it: should contain network policy to allow outbound traffic to postgresql when not using local
+    set:
+      postgresql.enabled: true
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-postgresql-egress
+      - equal:
+          path: spec.egress[0].to
+          value:
+            - ipBlock:
+                cidr: 10.0.0.0/8
+            - ipBlock:
+                cidr: 172.16.0.0/12
+            - ipBlock:
+                cidr: 192.168.0.0/16
   - it: should properly create egress network policy using shorthand method with only to specified
     set:
       networkPolicies.tests.enabled: true
@@ -232,22 +313,29 @@ tests:
             - port: 3000
   - it: should properly create ingress network policy using shorthand method with both to and from specified
     set:
+      istio.enabled: false
       networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
       networkPolicies.bundled.dynamic.enabled: false
       networkPolicies.package.allow-custom-monitor-ingress.enabled: true
-      networkPolicies.package.allow-custom-monitor-ingress.direction: Egress
-      networkPolicies.package.allow-custom-monitor-ingress.to: "prometheus.monitoring"
+      networkPolicies.package.allow-custom-monitor-ingress.direction: Ingress
+      networkPolicies.package.allow-custom-monitor-ingress.from: "prometheus.monitoring"
+      networkPolicies.package.allow-custom-monitor-ingress.to: "kiali.kiali"
       networkPolicies.package.allow-custom-monitor-ingress.ports:
-      - port: 20001
+      - port: 1234
         protocol: TCP
     asserts:
       - equal:
           path: metadata.name
           value: allow-custom-monitor-ingress
       - equal:
-          path: spec.egress[0].to
+          path: spec.podSelector
+          value:
+            matchLabels:
+              app.kubernetes.io/name: kiali
+      - equal:
+          path: spec.ingress[0].from
           value:
             - namespaceSelector:
                 matchLabels:
@@ -255,3 +343,65 @@ tests:
               podSelector:
                 matchLabels:
                   app.kubernetes.io/name: prometheus
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 1234
+              protocol: TCP
+  - it: should properly create network policy using package passthrough
+    set:
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.bundled.dynamic.enabled: false
+      networkPolicies.package.allow-jaeager-egress.enabled: true
+      networkPolicies.package.allow-jaeager-egress.spec:
+        podSelector: {}
+      networkPolicies.package.allow-jaeager-egress.spec.policyTypes:
+        - Egress
+      networkPolicies.package.allow-jaeager-egress.spec.egress.to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: jaeger
+          podSelector:
+            matchLabels:
+              app: jaeger
+      networkPolicies.package.allow-jaeager-egress.spec.egress.ports:
+      - port: 16686
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-jaeager-egress
+      - equal:
+          path: spec.egress.to
+          value:
+            - namespaceSelector:
+                matchLabels:
+                  app.kubernetes.io/name: jaeger
+              podSelector:
+                matchLabels:
+                  app: jaeger
+      - equal:
+          path: spec.egress.ports
+          value:
+            - port: 16686
+  - it: should create additional customer provided network policy
+    set:
+      istio.enabled: false
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.bundled.dynamic.enabled: false
+      networkPolicies.additionalPolicies:
+        - name: allow-runners-egress
+          spec:
+            podSelector: {}
+            policyTypes:
+            - Egress
+            egress:
+            - to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+    asserts:
+      - hasDocuments:
+          count: 1

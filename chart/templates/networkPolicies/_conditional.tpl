@@ -36,13 +36,13 @@ spec:
     - namespaceSelector:
         matchLabels:
           {{- if .Values.networkPolicies.istioNamespaceSelector }}
-          app.kubernetes.io/name: {{ .Values.networkPolicies.istioNamespaceSelector.egress }}
+          kubernetes.io/metadata.name: {{ .Values.networkPolicies.istioNamespaceSelector.egress }}
           {{- else }}
-          app.kubernetes.io/name: "istio-controlplane"
+          kubernetes.io/metadata.name: "istio-controlplane"
           {{- end }}
       podSelector:
         matchLabels:
-          app: istiod
+          app.kubernetes.io/name: istiod
     ports:
     - port: 15012
       protocol: TCP
@@ -65,13 +65,17 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: monitoring
+          kubernetes.io/metadata.name: monitoring
       podSelector:
         matchLabels:
-          app: prometheus
+          app.kubernetes.io/name: prometheus
     ports:
     - port: 15020
       protocol: TCP
+  {{- if and .Values.redis .Values.redis.enabled }}
+    - port: 9121
+      protocol: TCP
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- if and .Values.tracing .Values.tracing.enabled }}
@@ -91,7 +95,7 @@ spec:
   - to:
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: tempo
+          kubernetes.io/metadata.name: tempo
       podSelector:
         matchLabels:
           app.kubernetes.io/name: tempo

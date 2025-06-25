@@ -1,3 +1,24 @@
+domain: bigbang.mil
+
+authservice:
+  enabled: false
+
+istio:
+  enabled: true
+  hardened:
+    enabled: false
+  mtls:
+    mode: STRICT
+
+monitoring:
+  enabled: false
+
+sso:
+  enabled: false
+
+tracing:
+  enabled: false
+
 networkPolicies:
   enabled: true
   bundled:
@@ -7,12 +28,31 @@ networkPolicies:
       enabled: true
     kubeApiAccess:
       enabled: false
-      controlPlaneCidr:
+      controlPlaneCidrs:
       - 10.0.0.0/8
       - 172.16.0.0/12
       - 192.168.0.0/16
     dynamic:
       enabled: true
-      ssoCidr:
+      ssoCidrs:
       - 0.0.0.0/0
+      databaseCidrs:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
   additionalPolicies: []
+
+minio:
+  enabled: false
+
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+tests:
+  enabled: false
+
+waitJob:
+  enabled: false

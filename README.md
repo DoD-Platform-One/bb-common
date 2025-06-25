@@ -30,6 +30,14 @@ The final step for integrating this library chart is to create a file called com
 
 The package should now be using all shared network policies and will now have the ability to use shorthand network policies for any package specific policies.
 
+### Testing
+
+This project is using the unittests plugin for helm which can be installed by following the documentation [here](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install).
+
+In order to run the tests execute the following command:
+
+`cd chart && helm unittest .`
+
 ####  Future State
 
 In the future the following items will likely also be integrated into this library chart:
@@ -37,3 +45,6 @@ In the future the following items will likely also be integrated into this libra
 - Authorization Policies
 - Service Entries
 - Peer Authentications
+- Vritual Services
+
+The end goal of this library will be to have all values at the package level under a `bigbang` enabling any package to simply override the defaults set forth in the values.yaml file.  In the interim, while the package is being improved and iterated upon packages will simply use the templated definitions.
