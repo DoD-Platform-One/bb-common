@@ -14,14 +14,14 @@ spec:
   - Egress
   egress:
   - to:
-  {{- range .Values.networkPolicies.bundled.kubeApiAccess.controlPlaneCidr }}
+  {{- range .Values.networkPolicies.bundled.kubeApiAccess.controlPlaneCidrs }}
     - ipBlock:
         cidr: {{ . }}
         {{- include "bb-common.metadataExclude" . | indent 8 }}
   {{- end -}}
 {{- end }}
 {{- if .Values.networkPolicies.bundled.dynamic.enabled }}
-{{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingressGateway }}
+{{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingressGatewayPorts }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -39,7 +39,7 @@ spec:
       - namespaceSelector:
           matchLabels:
             {{- if .Values.networkPolicies.istioNamespaceSelector }}
-            app.kubernetes.io/name: {{ .Values.networkPolicies.istioNamespaceSelector.ingress }}
+            kubernetes.io/metadata.name: {{ .Values.networkPolicies.istioNamespaceSelector.ingress }}
             {{- else }}
             app.kubernetes.io/name: "istio-controlplane"
             {{- end }}
@@ -47,7 +47,7 @@ spec:
           matchLabels:
             {{- toYaml .Values.networkPolicies.ingressLabels | nindent 12}}
       ports:
-      {{- range .Values.networkPolicies.bundled.dynamic.ingressGateway }}
+      {{- range .Values.networkPolicies.bundled.dynamic.ingressGatewayPorts }}
         - port: {{ .port }}
           {{- if .protocol }}
           protocol: {{ .protocol }}
@@ -69,8 +69,8 @@ spec:
   - Egress
   egress:
   - to:
-  {{- if .Values.networkPolicies.bundled.dynamic.ssoCidr }}
-  {{- range .Values.networkPolicies.bundled.dynamic.ssoCidr }}
+  {{- if .Values.networkPolicies.bundled.dynamic.ssoCidrs }}
+  {{- range .Values.networkPolicies.bundled.dynamic.ssoCidrs }}
     - ipBlock:
         cidr: {{ . }}
         {{- include "bb-common.metadataExclude" . | indent 8 }}
@@ -81,6 +81,53 @@ spec:
         except:
         - 169.254.169.254/32
   {{- end }}
+{{- end }}
+{{- if and .Values.monitoring .Values.monitoring.enabled .Values.networkPolicies.bundled.dynamic.metricsPorts }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-metrics-ingress
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: monitoring
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: prometheus
+      ports:
+      {{- range .Values.networkPolicies.bundled.dynamic.metricsPorts }}
+        - port: {{ .port }}
+          {{- if .protocol }}
+          protocol: {{ .protocol }}
+          {{- end }}
+      {{- end }}
+{{- end }}
+{{- if and .Values.networkPolicies.bundled.dynamic.databaseCidrs (eq .Values.postgresql.enabled true) }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgresql-egress
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 5432
+    to:
+  {{- range .Values.networkPolicies.bundled.dynamic.databaseCidrs }}
+    - ipBlock:
+        cidr: {{ . }}
+        {{- include "bb-common.metadataExclude" . | indent 8 }}
+  {{- end -}}
 {{- end }}
 {{- end }}
 {{- end }}

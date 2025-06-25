@@ -16,20 +16,20 @@ networkPolicies:
       enabled: true
     kubeApiAccess:
       enabled: true
-      controlPlaneCidr:
+      controlPlaneCidrs:
       - 10.0.0.0/24
       - 10.0.1.0/24
     dynamic:
       enabled: true
-      ingressGateway:
+      ingressGatewayPorts:
       - port: 20001
         protocol: TCP
-      metrics:
+      metricsPorts:
       - port: 1234
-      ssoCidr:
+      ssoCidrs:
       - 10.10.10.0/24
       - 10.10.11.0/24
-      databaseCidr:
+      databaseCidrs:
       - 10.20.1.0/24
       - 10.20.2.0/24
   package:
