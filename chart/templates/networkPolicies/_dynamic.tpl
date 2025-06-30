@@ -83,6 +83,7 @@ spec:
   {{- end }}
 {{- end }}
 {{- if and .Values.monitoring .Values.monitoring.enabled .Values.networkPolicies.bundled.dynamic.metricsPorts }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -109,6 +110,7 @@ spec:
       {{- end }}
 {{- end }}
 {{- if and .Values.networkPolicies.bundled.dynamic.databaseCidrs (eq .Values.postgresql.enabled true) }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
