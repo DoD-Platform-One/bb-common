@@ -17,8 +17,9 @@ networkPolicies:
     kubeApiAccess:
       enabled: true
       controlPlaneCidrs:
-      - 10.0.0.0/24
-      - 10.0.1.0/24
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
     dynamic:
       enabled: true
       ingressGatewayPorts:
@@ -27,11 +28,11 @@ networkPolicies:
       metricsPorts:
       - port: 1234
       ssoCidrs:
-      - 10.10.10.0/24
-      - 10.10.11.0/24
+      - 0.0.0.0/0
       databaseCidrs:
-      - 10.20.1.0/24
-      - 10.20.2.0/24
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
   package:
     allow-prometheus-egress:
       enabled: true
@@ -99,9 +100,10 @@ All of the above policies can be found in the chart/templates/networkPolicies/_b
 This section is dedicated to network policies that exist in almost all packages and are enabled base on certain conditions (i.e. `monitoring.enabled` or `tracing.enabled`):
 
 - Allow all traffic to Istiod
-- Allow inbound traffic for Prometheus monitoring of istio sidecar
+- Allow inbound traffic for Prometheus monitoring of istio sidecar and redis (if enabled)
 - Allow all external traffic from helm test related pods
 - Allow all external traffic to tempo for tracing
+- Allow all traffic related to MinIO (Network Policy templates for this still need to be created)
 
 These policies are located in the chart/templates.networkPolicies/_conditional.yaml and are defined as `bb-common.netpols.conditional`.
 
@@ -110,14 +112,15 @@ These policies are located in the chart/templates.networkPolicies/_conditional.y
 This section is reserved for network policies that require information specific to the package or should allow users to input information based on their environment.
 
 - Allow all traffic to SSO
-- Allow all traffic from Ingress Gateway
-- Allow all traffic to port used for metrics
+- Allow all traffic from Ingress Gateway to ingress port(s)
+- Allow all traffic to port(s) used for metrics
+- Allow all traffic outbound to PostgreSQL if local database is not in use
 
 > [!NOTE]
 > If a given package doesn't have an associated database or have an ingress gateway it is not necessary to include those cidr sections.
 
 > [!NOTE]
-> The `newtorkPolicies.bundled.kubeApiAccess` value also falls within this category, however, as it is so common for packages that need system-level access it has its own section dedicated to it.  If a package does not require access to the Kubernetes API, the section can be left out entirely.
+> The `newtorkPolicies.bundled.kubeApiAccess` value also falls within this category, however, as it is so common for packages that need system-level access it has its own section dedicated to it.  If a package does not require access to the Kubernetes API it should be disabled by default.
 
 #### `networkPolicies.package`
 
@@ -141,6 +144,25 @@ There are two different ways these rules can be added:
 | ports | List of ports to allow |
 
 The `from` and `to` both follow the same convention of `pod`.`namespace`
+
+Example of the `package` section using the shorthand method:
+
+```
+    allow-prometheus-mesh-egress:
+      enabled: true
+      direction: Egress
+      to: prometheus.monitoring
+      ports:
+      - port: 9090
+    allow-grafana-mesh-egress:
+      enabled: true
+      direction: Egress
+      from: kiali.kiali
+      to: grafana.monitoring
+      ports:
+      - port: 3000
+        protocol: TCP
+```
 
 > [!NOTE]
 > The `namespace` may not always be used depending on the situation but is always required for the sake of keeping things consistent.  Additionally, this specific method will only work if the workloads follow standard Kubernetes naming conventions as it uses the app.kubernetes.io/name labels (which is used in the vast majority of custom network policies) for pod workloads.  Namepsace workloads will utilize the kubernetes.io/metadata.name label which should exist by default across all namespaces.
