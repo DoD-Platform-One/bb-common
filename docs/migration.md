@@ -158,4 +158,6 @@ Once the above MR is merged into the Big Bang repository the migration is comple
 
 The following MR's for Kiali and its associated Big Bang MR can be reviewed as a working example of the above steps:
 
-**Update with links once Kiali is fully integarated**
+[Kiali Package MR](https://repo1.dso.mil/big-bang/product/packages/kiali/-/merge_requests/314/diffs)
+
+[Kiali Umbrella Template MR](https://repo1.dso.mil/big-bang/bigbang/-/merge_requests/6499/diffs)
