@@ -103,7 +103,7 @@ This section is dedicated to network policies that exist in almost all packages 
 - Allow inbound traffic for Prometheus monitoring of istio sidecar and redis (if enabled)
 - Allow all external traffic from helm test related pods
 - Allow all external traffic to tempo for tracing
-- Allow all traffic related to MinIO (Network Policy templates for this still need to be created)
+- Allow all traffic related to MinIO
 
 These policies are located in the chart/templates.networkPolicies/_conditional.yaml and are defined as `bb-common.netpols.conditional`.
 

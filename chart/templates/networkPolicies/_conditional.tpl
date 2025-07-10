@@ -1,4 +1,5 @@
 {{- define "bb-common.netpols.conditional" }}
+{{- $minioTenant := index .Values "minio-tenant" }}
 {{- if .Values.networkPolicies.bundled.conditional.enabled }}
 {{- if and .Values.bbtests .Values.bbtests.enabled }}
 ---
@@ -76,6 +77,10 @@ spec:
     - port: 9121
       protocol: TCP
   {{- end }}
+  {{- if or (and .Values.minio (or .Values.minio.enabled .Values.minio.install)) (and $minioTenant $minioTenant.enabled) }}
+    - port: 9000
+      protocol: TCP
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- if and .Values.tracing .Values.tracing.enabled }}
@@ -101,6 +106,43 @@ spec:
           app.kubernetes.io/name: tempo
     ports:
     - port: 9411
+{{- end }}
+{{- if or (and .Values.minio (or .Values.minio.enabled .Values.minio.install)) (and $minioTenant $minioTenant.enabled) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-minio-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: minio
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: minio-operator
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: minio-operator
+      ports:
+      - port: 9000
+        protocol: TCP
+  egress:
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: minio-operator
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: minio-operator
+      ports:
+      - port: 4222
+        protocol: TCP
 {{- end }}
 {{- end }}
 {{- end }}
