@@ -225,7 +225,7 @@ tests:
     asserts:
       - equal:
           path: metadata.name
-          value: allow-kube-api-egress
+          value: allow-kube-api-egress-all
       - equal:
           path: spec.egress[0].to
           value:
@@ -235,6 +235,34 @@ tests:
                 cidr: 172.16.0.0/12
             - ipBlock:
                 cidr: 192.168.0.0/16
+      - equal:
+          path: spec.podSelector
+          value: {}
+  - it: should contain network policy to allow kube api egress with correct cidr when kubApiAccess is enabled (with specific podSelector)
+    set:
+      istio.enabled: false
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.kubeApiAccess.enabled: true
+      networkPolicies.bundled.kubeApiAccess.pods: ["foo"]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-kube-api-egress-foo
+      - equal:
+          path: spec.egress[0].to
+          value:
+            - ipBlock:
+                cidr: 10.0.0.0/8
+            - ipBlock:
+                cidr: 172.16.0.0/12
+            - ipBlock:
+                cidr: 192.168.0.0/16
+      - equal:
+          path: spec.podSelector
+          value: 
+            matchLabels:
+              app.kubernetes.io/name: foo
   - it: should contain network policy to allow gateway ingress with correct ports and selectors when istio is enabled
     set:
       istio.enabled: true
