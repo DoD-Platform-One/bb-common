@@ -260,7 +260,7 @@ tests:
                 cidr: 192.168.0.0/16
       - equal:
           path: spec.podSelector
-          value: 
+          value:
             matchLabels:
               app.kubernetes.io/name: foo
   - it: should contain network policy to allow gateway ingress with correct ports and selectors when istio is enabled
@@ -311,9 +311,9 @@ tests:
           path: spec.egress[0].to
           content:
             ipBlock:
-               cidr: 0.0.0.0/0
-               except:
-               - 169.254.169.254/32
+              cidr: 0.0.0.0/0
+              except:
+              - 169.254.169.254/32
   - it: should contain network policy to allow sso egress with correct cidr when authservice is enabled
     set:
       authservice.enabled: true
@@ -442,6 +442,60 @@ tests:
           value:
             - port: 1234
               protocol: TCP
+  - it: should properly create ingress network policy using templated shorthand method with both to and from specified
+    set:
+      istio.enabled: false
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.bundled.dynamic.enabled: false
+      networkPolicies.package.allow-custom-monitor-ingress.enabled: true
+      networkPolicies.package.allow-custom-monitor-ingress.direction: Ingress
+      networkPolicies.package.allow-custom-monitor-ingress.from: "prometheus.monitoring"
+      networkPolicies.package.allow-custom-monitor-ingress.to: '{{ join "" (list "k" "i" "a" "l" "i") }}.kiali'
+    asserts:
+      - equal:
+          path: spec.podSelector
+          value:
+            matchLabels:
+              app.kubernetes.io/name: kiali
+  - it: should properly create ingress network policy using templated shorthand with arbitrary values
+    set:
+      some.template: hey
+      istio.enabled: false
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.bundled.dynamic.enabled: false
+      networkPolicies.package.allow-custom-monitor-ingress.enabled: true
+      networkPolicies.package.allow-custom-monitor-ingress.direction: Ingress
+      networkPolicies.package.allow-custom-monitor-ingress.from: "prometheus.monitoring"
+      networkPolicies.package.allow-custom-monitor-ingress.to: "{{ .Values.some.template }}.kiali"
+    asserts:
+      - equal:
+          path: spec.podSelector
+          value:
+            matchLabels:
+              app.kubernetes.io/name: hey
+  - it: should properly create ingress network policy using templated name
+    set:
+      some.template: hey
+      istio.enabled: false
+      networkPolicies.tests.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.bundled.dynamic.enabled: false
+      networkPolicies:
+        package:
+          "{{ .Values.some.template }}":
+            enabled: true
+            direction: Ingress
+            from: prometheus.monitoring
+            to: kiali.kiali
+    asserts:
+      - equal:
+          path: metadata.name
+          value: hey
   - it: should properly create network policy using package passthrough
     set:
       networkPolicies.tests.enabled: true
