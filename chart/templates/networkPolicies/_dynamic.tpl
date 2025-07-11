@@ -1,24 +1,9 @@
 {{- define "bb-common.netpols.dynamic" }}
 {{- if .Values.networkPolicies.bundled.kubeApiAccess.enabled }}
+{{- range (.Values.networkPolicies.bundled.kubeApiAccess.pods | default (list nil)) }}
 ---
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-kube-api-egress
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "bb-common.label" .  | indent 4}}
-spec:
-  podSelector: {}
-  policyTypes:
-  - Egress
-  egress:
-  - to:
-  {{- range .Values.networkPolicies.bundled.kubeApiAccess.controlPlaneCidrs }}
-    - ipBlock:
-        cidr: {{ . }}
-        {{- include "bb-common.metadataExclude" . | indent 8 }}
-  {{- end -}}
+{{- include "bb-common.netpols.egress-kube-api" (dict "root" $ "pod" .) }}
+{{- end }}
 {{- end }}
 {{- if .Values.networkPolicies.bundled.dynamic.enabled }}
 {{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingressGatewayPorts }}

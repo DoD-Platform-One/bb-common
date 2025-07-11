@@ -20,6 +20,11 @@ networkPolicies:
       - 10.0.0.0/8
       - 172.16.0.0/12
       - 192.168.0.0/16
+      # A policy will be generated for each item in `pods` targeting pods with a label
+      # selector `app.kubernetes.io/name: pod`. If omitted it will generate a single policy
+      # selecting all pods in the namespace.
+      pods:
+      - grafana
     dynamic:
       enabled: true
       ingressGatewayPorts:
