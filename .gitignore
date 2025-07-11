@@ -34,5 +34,5 @@ ignore/*
 .history/
 
 # Ignore helm unittest artifacts
-chart/.debug/
+**/.debug/
 chart/tests/__snapshot__

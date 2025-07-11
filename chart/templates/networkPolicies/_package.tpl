@@ -2,6 +2,8 @@
 {{- if .Values.networkPolicies.package }}
 {{- range $name, $policy := .Values.networkPolicies.package }}
 {{- if $policy.enabled }}
+{{- $name = tpl $name $ }}
+{{- $policy =  tpl (toYaml $policy) $ | fromYaml }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
