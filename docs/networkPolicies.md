@@ -27,9 +27,19 @@ networkPolicies:
       - grafana
     dynamic:
       enabled: true
-      ingressGatewayPorts:
-      - port: 20001
-        protocol: TCP
+      ingress:
+        sidekiq:
+          selector:
+            app: sidekiq
+          ports:
+            - port: 8080
+              protocol: TCP
+        gitlab-pages:
+          selector:
+            app: gitlab-pages
+          ports:
+            - port: 8090
+              protocol: TCP
       metricsPorts:
       - port: 1234
       ssoCidrs:

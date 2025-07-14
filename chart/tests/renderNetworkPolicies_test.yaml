@@ -1,12 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
 suite: Network Policy Tests for all Policies
 templates:
   - templates/renderNetworkPolicies.yaml
-
+set:
+  networkPolicies.tests.enabled: true
 tests:
   - it: should contain no network policies when disabled
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - hasDocuments:
@@ -14,7 +15,6 @@ tests:
   - it: should contain network policy named "allow-kube-dns-egress"
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
     documentIndex: 0
     asserts:
       - equal:
@@ -23,7 +23,6 @@ tests:
   - it: should contain network policy named "deny-all"
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
     documentIndex: 1
     asserts:
       - equal:
@@ -32,7 +31,6 @@ tests:
   - it: should contain network policy named "allow-intranamespace"
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
     documentIndex: 2
     asserts:
       - equal:
@@ -42,7 +40,6 @@ tests:
     set:
       bbtests.enabled: true
       istio.enabled: false
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -51,7 +48,6 @@ tests:
   - it: should contain network policy to allow istiod egress with correct ports and namespace selector when istio is enabled
     set:
       istio.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.istioNamespaceSelector.egress: istio-system
     asserts:
@@ -79,7 +75,6 @@ tests:
     set:
       istio.enabled: true
       monitoring.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -105,7 +100,6 @@ tests:
       istio.enabled: true
       monitoring.enabled: true
       redis.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -133,7 +127,6 @@ tests:
       istio.enabled: true
       monitoring.enabled: true
       minio.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -159,7 +152,6 @@ tests:
     set:
       istio.enabled: false
       tracing.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -182,7 +174,6 @@ tests:
     set:
       istio.enabled: false
       minio.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
     asserts:
       - equal:
@@ -219,7 +210,6 @@ tests:
   - it: should contain network policy to allow kube api egress with correct cidr when kubApiAccess is enabled
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.kubeApiAccess.enabled: true
     asserts:
@@ -241,7 +231,6 @@ tests:
   - it: should contain network policy to allow kube api egress with correct cidr when kubApiAccess is enabled (with specific podSelector)
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.kubeApiAccess.enabled: true
       networkPolicies.bundled.kubeApiAccess.pods: ["foo"]
@@ -263,44 +252,9 @@ tests:
           value:
             matchLabels:
               app.kubernetes.io/name: foo
-  - it: should contain network policy to allow gateway ingress with correct ports and selectors when istio is enabled
-    set:
-      istio.enabled: true
-      networkPolicies.tests.enabled: true
-      networkPolicies.bundled.base.enabled: false
-      networkPolicies.bundled.conditional.enabled: false
-      networkPolicies.ingressLabels:
-        istio: ingressgateway
-        app.kubernetes.io/name: public-ingressgateway
-      networkPolicies.istioNamespaceSelector.ingress: istio-gateway
-      networkPolicies.bundled.dynamic.ingressGatewayPorts:
-        - port: 20001
-          protocol: TCP
-        - port: 20002
-    asserts:
-      - equal:
-          path: metadata.name
-          value: allow-istio-gateway-ingress
-      - contains:
-          path: spec.ingress[0].from
-          content:
-            namespaceSelector:
-              matchLabels:
-                kubernetes.io/metadata.name: istio-gateway
-            podSelector:
-              matchLabels:
-                istio: ingressgateway
-                app.kubernetes.io/name: public-ingressgateway
-      - equal:
-          path: spec.ingress[0].ports
-          value:
-            - port: 20001
-              protocol: TCP
-            - port: 20002
   - it: should contain network policy to allow sso egress with correct cidr when sso is enabled
     set:
       sso.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
     asserts:
@@ -317,7 +271,6 @@ tests:
   - it: should contain network policy to allow sso egress with correct cidr when authservice is enabled
     set:
       authservice.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
     asserts:
@@ -334,7 +287,6 @@ tests:
   - it: should contain network policy to allow inbound metrics with the correct specified port
     set:
       monitoring.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
       networkPolicies.bundled.dynamic.metricsPorts:
@@ -361,7 +313,6 @@ tests:
   - it: should contain network policy to allow outbound traffic to postgresql when not using local
     set:
       postgresql.enabled: true
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
     asserts:
@@ -379,7 +330,6 @@ tests:
                 cidr: 192.168.0.0/16
   - it: should properly create egress network policy using shorthand method with only to specified
     set:
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
       networkPolicies.bundled.dynamic.enabled: false
@@ -408,7 +358,6 @@ tests:
   - it: should properly create ingress network policy using shorthand method with both to and from specified
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
       networkPolicies.bundled.dynamic.enabled: false
@@ -498,7 +447,6 @@ tests:
           value: hey
   - it: should properly create network policy using package passthrough
     set:
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
       networkPolicies.bundled.dynamic.enabled: false
@@ -536,7 +484,6 @@ tests:
   - it: should create additional customer provided network policy
     set:
       istio.enabled: false
-      networkPolicies.tests.enabled: true
       networkPolicies.bundled.base.enabled: false
       networkPolicies.bundled.conditional.enabled: false
       networkPolicies.bundled.dynamic.enabled: false

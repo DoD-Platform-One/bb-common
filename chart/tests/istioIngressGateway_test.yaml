@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Network Policy Tests for Istio Ingress Gateway
+templates:
+  - templates/renderNetworkPolicies.yaml
+set:
+  networkPolicies.tests.enabled: true
+tests:
+  - it: should contain network policy to allow gateway ingress with correct ports and selectors when istio is enabled
+    set:
+      istio.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.ingressLabels:
+        istio: ingressgateway
+        app.kubernetes.io/name: public-ingressgateway
+      networkPolicies.istioNamespaceSelector.ingress: istio-gateway
+      networkPolicies.bundled.dynamic.ingress:
+        kiali:
+          ports:
+            - port: 20001
+              protocol: TCP
+            - port: 20002
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-istio-gateway-ingress-kiali
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: istio-gateway
+            podSelector:
+              matchLabels:
+                istio: ingressgateway
+                app.kubernetes.io/name: public-ingressgateway
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 20001
+              protocol: TCP
+            - port: 20002
+  - it: should create an ingress network policy for istio gateway with specific podSelector
+    set:
+      istio.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.ingressLabels:
+        istio: ingressgateway
+        app.kubernetes.io/name: public-ingressgateway
+      networkPolicies.istioNamespaceSelector.ingress: istio-gateway
+      networkPolicies.bundled.dynamic.ingress:
+        registry:
+          selector:
+            app: registry
+          ports:
+            - port: 8080
+              protocol: TCP
+        gitlab-pages:
+          ports:
+            - port: 5000
+              protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-istio-gateway-ingress-gitlab-pages
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-istio-gateway-ingress-gitlab-pages
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: istio-gateway
+            podSelector:
+              matchLabels:
+                istio: ingressgateway
+                app.kubernetes.io/name: public-ingressgateway
+      - equal:
+          path: spec.podSelector.matchLabels
+          value: 
+            app.kubernetes.io/name: gitlab-pages
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 5000
+              protocol: TCP
+  - it: should create an ingress network policy for istio gateway with a wide open pod selector
+    set:
+      istio.enabled: true
+      networkPolicies.bundled.base.enabled: false
+      networkPolicies.bundled.conditional.enabled: false
+      networkPolicies.ingressLabels:
+        istio: ingressgateway
+        app.kubernetes.io/name: public-ingressgateway
+      networkPolicies.istioNamespaceSelector.ingress: istio-gateway
+      networkPolicies.bundled.dynamic.ingress:
+        registry:
+          selector: {}
+          ports:
+            - port: 8080
+              protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-istio-gateway-ingress-registry
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-istio-gateway-ingress-registry
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: istio-gateway
+            podSelector:
+              matchLabels:
+                istio: ingressgateway
+                app.kubernetes.io/name: public-ingressgateway
+      - equal:
+          path: spec.podSelector
+          value: {}
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 8080
+              protocol: TCP

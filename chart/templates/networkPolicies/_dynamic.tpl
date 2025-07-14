@@ -6,38 +6,11 @@
 {{- end }}
 {{- end }}
 {{- if .Values.networkPolicies.bundled.dynamic.enabled }}
-{{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingressGatewayPorts }}
+{{- if and .Values.istio .Values.istio.enabled .Values.networkPolicies.bundled.dynamic.ingress }}
+{{- range $name, $item := .Values.networkPolicies.bundled.dynamic.ingress }}
 ---
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-istio-gateway-ingress
-  namespace: "{{ .Release.Namespace }}"
-  labels:
-    {{- include "bb-common.label" .  | indent 4}}
-spec:
-  podSelector: {}
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-      - namespaceSelector:
-          matchLabels:
-            {{- if .Values.networkPolicies.istioNamespaceSelector }}
-            kubernetes.io/metadata.name: {{ .Values.networkPolicies.istioNamespaceSelector.ingress }}
-            {{- else }}
-            app.kubernetes.io/name: "istio-controlplane"
-            {{- end }}
-        podSelector:
-          matchLabels:
-            {{- toYaml .Values.networkPolicies.ingressLabels | nindent 12}}
-      ports:
-      {{- range .Values.networkPolicies.bundled.dynamic.ingressGatewayPorts }}
-        - port: {{ .port }}
-          {{- if .protocol }}
-          protocol: {{ .protocol }}
-          {{- end }}
-      {{- end }}
+{{- include "bb-common.netpols.ingress-istio-gateway" (dict "root" $ "item" $item "name" $name) }}
+{{- end }}
 {{- end }}
 {{- if or (and .Values.sso .Values.sso.enabled) (and .Values.authservice .Values.authservice.enabled) }}
 ---
