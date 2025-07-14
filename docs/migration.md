@@ -40,9 +40,11 @@ networkPolicies:
       - 192.168.0.0/16
     dynamic:
       enabled: true
-      ingressGatewayPorts:
-      - port: 20001
-        protocol: TCP
+      ingress:
+        kiali:
+        - ports:
+          port: 20001
+          protocol: TCP
       metricsPorts:
       - port: 1234
         protocol: TCP
@@ -56,7 +58,7 @@ networkPolicies:
   additionalPolicies: []
 ```
 
-If your package does not need access to the Kube API, you can set the `networkPolicies.bundled.kubeApiAccess.enabled` key to false and remove the `controlPlaneCidrs` key underneath it. The `ingressGatewayPorts`, `metricsPorts`, `ssoCidrs`, and `databaseCidrs` can also be removed if the package has no ingress, no metric ports for monitoring to scrape, no sso functionality, or no database connectivity respectively.
+If your package does not need access to the Kube API, you can set the `networkPolicies.bundled.kubeApiAccess.enabled` key to false and remove the `controlPlaneCidrs` key underneath it. The `ingress`, `metricsPorts`, `ssoCidrs`, and `databaseCidrs` can also be removed if the package has no ingress, no metric ports for monitoring to scrape, no sso functionality, or no database connectivity respectively.
 
 5. Update the `networkPolicies.package` section in the values.yaml to add any package specific network policies.  Refer to [this documentation](../docs/networkPolicies.md#networkpoliciespackage) on guidance for the method to use for this portion and further instructions on how to implement them.
 
@@ -106,7 +108,7 @@ If your package does not need access to the Kube API, you can set the `networkPo
               "type": "object",
               "properties": {
                 "enabled": {"type": "boolean"},
-                "ingressGatewayPorts": {"type": "array"},
+                "ingress": {"type": "array"},
                 "metricsPorts": {"type": "array"},
                 "databaseCidrs": {"type": "array"},
                 "ssoCidrs": {"type": "array"}
