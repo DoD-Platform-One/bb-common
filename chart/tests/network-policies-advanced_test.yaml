@@ -1,0 +1,251 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Network Policies Advanced Features Tests
+templates:
+  - templates/network-policies/render.yaml
+release:
+  name: test
+  namespace: test
+set:
+  networkPolicies.enabled: true
+  networkPolicies.ingress.defaults.enabled: false
+  networkPolicies.egress.defaults.enabled: false
+tests:
+  - it: must create policy from spec literal
+    set:
+      networkPolicies.egress.from.app.to.literal.custom-rule:
+        enabled: true
+        spec:
+          - to:
+              - namespaceSelector:
+                  matchExpressions:
+                    - key: environment
+                      operator: In
+                      values: ["production", "staging"]
+                podSelector:
+                  matchLabels:
+                    tier: backend
+            ports:
+              - port: 443
+                protocol: TCP
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: app
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchExpressions:
+                        - key: environment
+                          operator: In
+                          values: ["production", "staging"]
+                    podSelector:
+                      matchLabels:
+                        tier: backend
+                ports:
+                  - port: 443
+                    protocol: TCP
+
+  - it: must support custom pod selectors
+    set:
+      networkPolicies.egress.from:
+        my-app:
+          podSelector:
+            matchLabels:
+              component: worker
+              tier: backend
+          to:
+            k8s:
+              database/postgres:5432: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-my-app-to-ns-database-pod-postgres-tcp-port-5432
+    asserts:
+      - equal:
+          path: spec.podSelector
+          value:
+            matchLabels:
+              component: worker
+              tier: backend
+
+  - it: must support ingress with port specifications in local key
+    set:
+      networkPolicies.ingress.to:
+        api-server:8080:
+          from:
+            k8s:
+              istio-gateway/public-ingressgateway: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-api-server-tcp-port-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: api-server
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: istio-gateway
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: public-ingressgateway
+                ports:
+                  - port: 8080
+                    protocol: TCP
+
+  - it: must support ingress with multiple ports in local key
+    set:
+      networkPolicies.ingress.to:
+        api-server:[8080,8443]:
+          from:
+            k8s:
+              frontend/web: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-api-server-tcp-ports-8080-8443-from-ns-frontend-pod-web
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 8080
+              protocol: TCP
+            - port: 8443
+              protocol: TCP
+
+  - it: must support ingress with UDP protocol in local key
+    set:
+      networkPolicies.ingress.to:
+        udp://dns-server:53:
+          from:
+            k8s:
+              "*/*": true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.ingress[0].ports[0]
+          value:
+            port: 53
+            protocol: UDP
+
+  - it: must support custom egress definitions
+    set:
+      networkPolicies.egress.definitions:
+        external-api:
+          to:
+            - ipBlock:
+                cidr: 52.84.0.0/16
+          ports:
+            - port: 443
+              protocol: TCP
+      networkPolicies.egress.from.app.to.definition.external-api: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-external-api
+    asserts:
+      - equal:
+          path: spec.egress[0]
+          value:
+            to:
+              - ipBlock:
+                  cidr: 52.84.0.0/16
+            ports:
+              - port: 443
+                protocol: TCP
+
+  - it: must support custom ingress definitions
+    set:
+      networkPolicies.ingress.definitions:
+        internal-monitoring:
+          from:
+            - namespaceSelector:
+                matchLabels:
+                  purpose: monitoring
+              podSelector:
+                matchLabels:
+                  app: prometheus
+          ports:
+            - port: 9090
+              protocol: TCP
+      networkPolicies.ingress.to.app.from.definition.internal-monitoring: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-from-internal-monitoring
+    asserts:
+      - equal:
+          path: spec.ingress[0]
+          value:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    purpose: monitoring
+                podSelector:
+                  matchLabels:
+                    app: prometheus
+            ports:
+              - port: 9090
+                protocol: TCP
+
+  - it: must support wildcard pod selectors in egress
+    set:
+      networkPolicies.egress.from.*.to.k8s.kube-system/kube-dns:53: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-any-pod-to-ns-kube-system-pod-kube-dns-tcp-port-53
+    asserts:
+      - equal:
+          path: spec.podSelector
+          value: {}
+
+  - it: must properly escape CIDR blocks with slashes in names
+    set:
+      networkPolicies.egress.from.app.to.cidr:
+        192.168.0.0/16:443: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-cidr-192-168-0-0-16-tcp-port-443
+    asserts:
+      - equal:
+          path: spec.egress[0].to[0].ipBlock.cidr
+          value: 192.168.0.0/16
+
+  - it: must allow overriding default definition
+    set:
+      networkPolicies.egress.definitions.kubeAPI:
+        to:
+          - ipBlock:
+              cidr: 10.100.100.0/24
+          - ipBlock:
+              cidr: 10.100.101.0/24
+        ports:
+          - port: 8443
+            protocol: TCP
+      networkPolicies.egress.from.app.to.definition.kubeAPI: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-kubeapi
+    asserts:
+      - equal:
+          path: spec.egress[0]
+          value:
+            to:
+              - ipBlock:
+                  cidr: 10.100.100.0/24
+              - ipBlock:
+                  cidr: 10.100.101.0/24
+            ports:
+              - port: 8443
+                protocol: TCP
+

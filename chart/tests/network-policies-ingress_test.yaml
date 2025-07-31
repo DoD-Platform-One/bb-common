@@ -1,0 +1,279 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Network Policies Ingress Tests
+templates:
+  - templates/network-policies/render.yaml
+release:
+  name: test
+set:
+  networkPolicies:
+    enabled: true
+    ingress:
+      defaults:
+        enabled: false
+    egress:
+      defaults:
+        enabled: false
+tests:
+  - it: must not create any network policies when network policies are disabled
+    set:
+      networkPolicies.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: must create ingress policy from k8s workload via shorthand declaration
+    set:
+      networkPolicies.ingress.to.this.from.k8s.there/that: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-this-any-port-from-ns-there-pod-that
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+
+  - it: must create ingress policy from k8s workload with wildcard namespace via shorthand declaration
+    set:
+      networkPolicies.ingress.to.this.from.k8s.*/that: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-this-any-port-from-any-ns-pod-that
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector: {}
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+
+  - it: must create ingress policy from k8s workload with wildcard namespace and wildcard pod via shorthand declaration
+    set:
+      networkPolicies.ingress.to.this.from.k8s.*/*: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-this-any-port-from-any-ns-any-pod
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector: {}
+                    podSelector: {}
+
+  - it: must create ingress policy from k8s workload with specified namespace and wildcard pod via shorthand declaration
+    set:
+      networkPolicies.ingress.to.this.from.k8s.there/*: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-this-any-port-from-ns-there-any-pod
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector: {}
+
+  - it: must create ingress policy from gateway definition
+    set:
+      networkPolicies.ingress.to.this.from.definition.gateway: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-this-from-gateway
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: istio-gateway
+                    podSelector:
+                      matchLabels:
+                        istio: ingressgateway
+
+  - it: must create ingress policy from monitoring definition
+    set:
+      networkPolicies.ingress.to.this.from.definition.monitoring: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-this-from-monitoring
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: monitoring
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: prometheus
+
+  - it: must create ingress policy from CIDR block
+    set:
+      networkPolicies.ingress.to.app.from.cidr:
+        10.0.0.0/24: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-any-port-from-cidr-10-0-0-0-24
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: app
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - ipBlock:
+                      cidr: 10.0.0.0/24
+
+  - it: must create ingress policy from spec literal
+    set:
+      networkPolicies.ingress.to.api.from.literal.custom-rule:
+        enabled: true
+        spec:
+          - from:
+              - namespaceSelector:
+                  matchExpressions:
+                    - key: environment
+                      operator: In
+                      values: ["development", "staging"]
+                podSelector:
+                  matchLabels:
+                    tier: frontend
+            ports:
+              - port: 8443
+                protocol: TCP
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: api
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchExpressions:
+                        - key: environment
+                          operator: In
+                          values: ["development", "staging"]
+                    podSelector:
+                      matchLabels:
+                        tier: frontend
+                ports:
+                  - port: 8443
+                    protocol: TCP
+
+  - it: must create open selector for namespace without pod specification
+    set:
+      networkPolicies.ingress.to.app.from.k8s.frontend: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-any-port-from-ns-frontend-any-pod
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: app
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: frontend
+                    podSelector: {}
+
+  - it: must support custom pod selectors
+    set:
+      networkPolicies.ingress.to:
+        backend-service:
+          podSelector:
+            matchLabels:
+              component: api
+              tier: backend
+          from:
+            k8s:
+              frontend/webapp: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-backend-service-any-port-from-ns-frontend-pod-webapp
+    asserts:
+      - equal:
+          path: spec.podSelector
+          value:
+            matchLabels:
+              component: api
+              tier: backend
+
+  - it: must include default labels in generated policies
+    set:
+      networkPolicies.ingress.to.app.from.k8s.test/client: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-any-port-from-ns-test-pod-client
+    asserts:
+      - equal:
+          path: metadata.labels["network-policies.bigbang.dev/source"]
+          value: bb-common
+      - equal:
+          path: metadata.labels["network-policies.bigbang.dev/direction"]
+          value: ingress
