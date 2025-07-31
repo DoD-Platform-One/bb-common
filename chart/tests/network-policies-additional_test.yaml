@@ -1,0 +1,168 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Network Policies Additional Policies Tests
+templates:
+  - templates/network-policies/render.yaml
+release:
+  name: test
+  namespace: test
+set:
+  networkPolicies.enabled: true
+  networkPolicies.ingress.defaults.enabled: false
+  networkPolicies.egress.defaults.enabled: false
+tests:
+  - it: must create additional policies from additionalPolicies key
+    set:
+      networkPolicies.additionalPolicies:
+        - name: custom-policy-1
+          spec:
+            podSelector:
+              matchLabels:
+                role: frontend
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - ipBlock:
+                      cidr: 10.0.0.0/8
+        - name: custom-policy-2
+          spec:
+            podSelector:
+              matchLabels:
+                role: backend
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - podSelector:
+                      matchLabels:
+                        role: frontend
+    asserts:
+      - hasDocuments:
+          count: 2
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: custom-policy-1
+          any: true
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: custom-policy-2
+          any: true
+
+  - it: must create additional policies from additional key (legacy)
+    set:
+      networkPolicies.additional:
+        - name: legacy-policy
+          spec:
+            podSelector:
+              matchLabels:
+                app: legacy
+            policyTypes:
+              - Ingress
+              - Egress
+    documentSelector:
+      path: metadata.name
+      value: legacy-policy
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app: legacy
+            policyTypes:
+              - Ingress
+              - Egress
+
+  - it: must add labels to additional policies
+    set:
+      networkPolicies.additionalPolicies:
+        - name: labeled-policy
+          labels:
+            custom-label: test-value
+            environment: development
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Egress
+    documentSelector:
+      path: metadata.name
+      value: labeled-policy
+    asserts:
+      - equal:
+          path: metadata.labels.custom-label
+          value: test-value
+      - equal:
+          path: metadata.labels.environment
+          value: development
+      - equal:
+          path: metadata.labels["network-policies.bigbang.dev/source"]
+          value: bb-common
+
+  - it: must add annotations to additional policies
+    set:
+      networkPolicies.additionalPolicies:
+        - name: annotated-policy
+          annotations:
+            description: This is a test policy
+            version: "1.0"
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+    documentSelector:
+      path: metadata.name
+      value: annotated-policy
+    asserts:
+      - equal:
+          path: metadata.annotations.description
+          value: This is a test policy
+      - equal:
+          path: metadata.annotations.version
+          value: "1.0"
+
+  - it: must support templating in additional policy specs
+    set:
+      customValue: custom-namespace
+      networkPolicies.additionalPolicies:
+        - name: templated-policy
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: "{{ .Values.customValue }}"
+    documentSelector:
+      path: metadata.name
+      value: templated-policy
+    asserts:
+      - equal:
+          path: spec.egress[0].to[0].namespaceSelector.matchLabels["kubernetes.io/metadata.name"]
+          value: custom-namespace
+
+  - it: must create both additional and regular policies together
+    set:
+      networkPolicies.egress.from.app.to.k8s.backend/api: true
+      networkPolicies.additionalPolicies:
+        - name: extra-policy
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+    asserts:
+      - hasDocuments:
+          count: 2
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: allow-egress-from-app-to-ns-backend-pod-api-any-port
+          any: true
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: extra-policy
+          any: true

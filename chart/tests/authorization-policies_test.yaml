@@ -1,0 +1,192 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Authorization Policies Tests
+templates:
+  - templates/network-policies/render.yaml
+release:
+  name: test
+set:
+  networkPolicies:
+    enabled: true
+    ingress:
+      defaults:
+        enabled: false
+      generateAuthorizationPolicies: true
+    egress:
+      defaults:
+        enabled: false
+tests:
+  - it: must not create authorization policies when disabled
+    set:
+      networkPolicies.ingress.generateAuthorizationPolicies: false
+      networkPolicies.ingress.to.myapp.from.k8s.admin-sa@admin/dashboard: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - documentSelector:
+          path: kind
+          value: NetworkPolicy
+        isKind:
+          of: NetworkPolicy
+
+  - it: must create authorization policy from k8s with service account identity
+    set:
+      networkPolicies.ingress.to.myapp.from.k8s.admin-sa@admin/dashboard: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-myapp-any-port-from-ns-admin-pod-dashboard-with-identity-admin-sa
+    asserts:
+      - equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      principals:
+                        - cluster.local/ns/admin/sa/admin-sa
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create authorization policy with specific port
+    set:
+      networkPolicies.ingress.to.myapp:8443.from.k8s.admin-sa@admin/dashboard: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-myapp-tcp-port-8443-from-ns-admin-pod-dashboard-with-identity-admin-sa
+    asserts:
+      - equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - to:
+                  - operation:
+                      ports:
+                        - "8443"
+                from:
+                  - source:
+                      principals:
+                        - cluster.local/ns/admin/sa/admin-sa
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create authorization policy with port range expanded
+    set:
+      networkPolicies.ingress.to.myapp:50000-50002.from.k8s.grpc-sa@services/grpc-client: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-myapp-tcp-ports-50000-thru-50002-from-ns-services-pod-grpc-client-with-identity-grpc-sa
+    asserts:
+      - equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - to:
+                  - operation:
+                      ports:
+                        - "50000"
+                        - "50001"
+                        - "50002"
+                from:
+                  - source:
+                      principals:
+                        - cluster.local/ns/services/sa/grpc-sa
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create multiple authorization policies for different identities
+    set:
+      networkPolicies.ingress.to.myapp:8081.from.k8s.admin-sa@admin/dashboard: true
+      networkPolicies.ingress.to.myapp:8080.from.k8s.user-sa@users/webapp: true
+    asserts:
+      - hasDocuments:
+          count: 4
+      - documentSelector:
+          path: metadata.name
+          value: allow-ingress-to-myapp-tcp-port-8081-from-ns-admin-pod-dashboard-with-identity-admin-sa
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      principals:
+                        - cluster.local/ns/admin/sa/admin-sa
+                to:
+                  - operation:
+                      ports:
+                        - "8081"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+      - documentSelector:
+          path: metadata.name
+          value: allow-ingress-to-myapp-tcp-port-8080-from-ns-users-pod-webapp-with-identity-user-sa
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      principals:
+                        - cluster.local/ns/users/sa/user-sa
+                to:
+                  - operation:
+                      ports:
+                        - "8080"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must not create authorization policy for k8s without identity
+    set:
+      networkPolicies.ingress.to.myapp.from.k8s.admin/dashboard: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - documentSelector:
+          path: kind
+          value: NetworkPolicy
+        isKind:
+          of: NetworkPolicy
+
+  - it: must create authorization policy with selector override
+    set:
+      networkPolicies.ingress.to.myapp:8443:
+        podSelector:
+          matchLabels:
+            app: myapp-specific
+            version: v2
+        from:
+          k8s:
+            admin-sa@admin/dashboard: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - to:
+                  - operation:
+                      ports:
+                        - "8443"
+                from:
+                  - source:
+                      principals:
+                        - cluster.local/ns/admin/sa/admin-sa
+            selector:
+              matchLabels:
+                app: myapp-specific
+                version: v2
+

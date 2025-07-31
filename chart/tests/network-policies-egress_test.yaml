@@ -1,0 +1,461 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Network Policies Egress Tests
+templates:
+  - templates/network-policies/render.yaml
+release:
+  name: test
+set:
+  networkPolicies.enabled: true
+  networkPolicies.ingress.defaults.enabled: false
+  networkPolicies.egress.defaults.enabled: false
+tests:
+  - it: must not create any network policies when network policies are disabled
+    set:
+      networkPolicies.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: must not create a policy that is disabled
+    set:
+      networkPolicies.egress.from.this.to.k8s.not-there/not-that: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: must create wildcard egress policy to k8s workload via shorthand declaration
+    set:
+      networkPolicies.egress.from.*.to.k8s.there/that: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-any-pod-to-ns-there-pod-that-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector: {}
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+
+  - it: must create egress policy to k8s workload via shorthand declaration
+    set:
+      networkPolicies.egress.from.this.to.k8s.there/that: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-ns-there-pod-that-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+
+  - it: must prepend release name when prependReleaseName is true
+    release:
+      name: test
+    set:
+      networkPolicies.prependReleaseName: true
+      networkPolicies.egress.from.this.to.k8s.there/that: true
+    documentSelector:
+      path: metadata.name
+      value: test-allow-egress-from-this-to-ns-there-pod-that-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+
+  - it: must create port spec when included in remote key
+    set:
+      networkPolicies.egress.from.this.to.k8s.there/that:80: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-ns-there-pod-that-tcp-port-80
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+                ports:
+                  - port: 80
+                    protocol: TCP
+
+  - it: must create ranged port spec when included in remote key
+    set:
+      networkPolicies.egress.from.this.to.k8s.there/that:8080-8088: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-ns-there-pod-that-tcp-ports-8080-thru-8088
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+                ports:
+                  - port: 8080
+                    endPort: 8088
+                    protocol: TCP
+
+  - it: must create spec with multiple ports when multiple ports are specified
+    set:
+      networkPolicies.egress.from.this.to.k8s:
+        there/that:[80,443]: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-ns-there-pod-that-tcp-ports-80-443
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+                ports:
+                  - port: 80
+                    protocol: TCP
+                  - port: 443
+                    protocol: TCP
+
+  - it: must parse protocol from shorthand spec
+    set:
+      networkPolicies.egress.from.this.to.k8s.udp://there/that:53: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-ns-there-pod-that-udp-port-53
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: that
+                ports:
+                  - port: 53
+                    protocol: UDP
+
+  - it: must create open selector for pods when pod is not specified
+    set:
+      networkPolicies.egress.from.this.to.k8s.there: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-ns-there-any-pod-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: there
+                    podSelector: {}
+
+  - it: must create open selector for wildcard namespace
+    set:
+      networkPolicies.egress.from.this.to.k8s.*: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-any-ns-any-pod-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector: {}
+                    podSelector: {}
+
+  - it: must create open selector for wildcard namespace and wildcard pod
+    set:
+      networkPolicies.egress.from.this.to.k8s.*/*: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-any-ns-any-pod-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector: {}
+                    podSelector: {}
+
+  - it: must use definition shorthand to reference defined policy
+    set:
+      networkPolicies.egress.definitions.elsewhere:
+        to:
+          - namespaceSelector:
+              matchLabels:
+                else: where
+            podSelector:
+              matchLabels:
+                else: where
+        ports:
+          - port: 1000
+            protocol: TCP
+      networkPolicies.egress.from.this.to.definition.elsewhere: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-elsewhere
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        else: where
+                    podSelector:
+                      matchLabels:
+                        else: where
+                ports:
+                  - port: 1000
+                    protocol: TCP
+
+  - it: must generate policy from cidr shorthand
+    set:
+      networkPolicies.egress.from.this.to.cidr:
+        10.10.10.0/24: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-cidr-10-10-10-0-24-any-port
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - ipBlock:
+                      cidr: 10.10.10.0/24
+
+  - it: must generate policy from cidr shorthand with port definition
+    set:
+      networkPolicies.egress.from.this.to.cidr:
+        10.10.10.0/24:80: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-cidr-10-10-10-0-24-tcp-port-80
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - ipBlock:
+                      cidr: 10.10.10.0/24
+                ports:
+                  - port: 80
+                    protocol: TCP
+
+  - it: must block access to metadata endpoint when wide-open cidr is used in cidr shorthand
+    set:
+      networkPolicies.egress.from.this.to.cidr:
+        0.0.0.0/0:[80,443]: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-anywhere-tcp-ports-80-443
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - ipBlock:
+                      cidr: 0.0.0.0/0
+                      except:
+                        - 169.254.169.254/32
+                ports:
+                  - port: 80
+                    protocol: TCP
+                  - port: 443
+                    protocol: TCP
+
+  - it: must allow users to override the excluded CIDRs and automatically determine if they should be excluded based on overlap
+    set:
+      networkPolicies.egress.from.this.to.cidr:
+        10.0.0.0/16:[80,443]: true
+      networkPolicies.egress.excludeCIDRs:
+        - 10.0.8.4/32
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-cidr-10-0-0-0-16-tcp-ports-80-443
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - ipBlock:
+                      cidr: 10.0.0.0/16
+                      except:
+                        - 10.0.8.4/32
+                ports:
+                  - port: 80
+                    protocol: TCP
+                  - port: 443
+                    protocol: TCP
+
+  - it: must create egress policy from kubeAPI definition
+    set:
+      networkPolicies.egress.from.this.to.definition.kubeAPI: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-this-to-kubeapi
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: this
+            policyTypes:
+              - Egress
+            egress:
+              - to:
+                  - ipBlock:
+                      cidr: 10.0.0.0/8
+                  - ipBlock:
+                      cidr: 172.16.0.0/12
+                  - ipBlock:
+                      cidr: 192.168.0.0/16
+
+  - it: must include default labels in generated policies
+    set:
+      networkPolicies.egress.from.app.to.k8s.backend/api: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-ns-backend-pod-api-any-port
+    asserts:
+      - equal:
+          path: metadata.labels["network-policies.bigbang.dev/source"]
+          value: bb-common
+      - equal:
+          path: metadata.labels["network-policies.bigbang.dev/direction"]
+          value: egress
+
+  - it: must create open selector for namespace without pod specification
+    set:
+      networkPolicies.egress.from.app.to.k8s.backend: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-ns-backend-any-pod-any-port
+    asserts:
+      - equal:
+          path: spec.egress[0].to[0].podSelector
+          value: {}

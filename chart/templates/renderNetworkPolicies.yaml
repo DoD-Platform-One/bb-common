@@ -1,3 +1,0 @@
-{{- if and .Values.networkPolicies.tests .Values.networkPolicies.tests.enabled -}}
-{{- include "bb-common.netpols.all" . }}
-{{- end -}}

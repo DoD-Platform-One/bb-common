@@ -1,58 +1,143 @@
-domain: bigbang.mil
-
-authservice:
-  enabled: false
-
-istio:
-  enabled: true
-  hardened:
-    enabled: false
-  mtls:
-    mode: STRICT
-
-monitoring:
-  enabled: false
-
-sso:
-  enabled: false
-
-tracing:
-  enabled: false
-
+# Network Policies Configuration
 networkPolicies:
-  enabled: true
-  bundled:
-    base:
-      enabled: true
-    conditional:
-      enabled: true
-    kubeApiAccess:
-      enabled: false
-      controlPlaneCidrs:
-      - 10.0.0.0/8
-      - 172.16.0.0/12
-      - 192.168.0.0/16
-    dynamic:
-      enabled: true
-      ssoCidrs:
-      - 0.0.0.0/0
-      databaseCidrs:
-      - 10.0.0.0/8
-      - 172.16.0.0/12
-      - 192.168.0.0/16
-  additionalPolicies: []
-
-minio:
+  # Enable/disable the generation of NetworkPolicies
   enabled: false
 
-postgresql:
-  enabled: false
+  # Prepend release name to all generated NetworkPolicy names
+  # Useful when deploying multiple releases in the same namespace
+  # prependReleaseName: false
 
-redis:
-  enabled: false
+  # Ingress rules control inbound traffic to pods
+  # ingress:
+  #   # Generate Istio AuthorizationPolicies alongside NetworkPolicies
+  #   # Requires service account identity prefix (e.g., sa@namespace/pod)
+  #   generateAuthorizationPolicies: true
+  #
+  #   # Default ingress policies (all enabled by default when networkPolicies.enabled is true)
+  #   defaults:
+  #     # Enable/disable all default policies at once
+  #     enabled: true
+  #     # Individual default policies (optional - only specify to disable)
+  #     # denyAll:
+  #     #   enabled: true  # Deny all ingress by default
+  #     # allowInNamespace:
+  #     #   enabled: true  # Allow ingress from same namespace
+  #
+  #   # Define ingress rules for specific pods
+  #   to:
+  #     # Simple example: API pod accepts traffic on port 8080
+  #     api:8080:
+  #       from:
+  #         # Kubernetes shorthand: namespace/pod or identity@namespace/pod
+  #         k8s:
+  #           frontend/web: true                    # From web pod in frontend namespace
+  #           monitoring/prometheus: true           # From prometheus in monitoring namespace
+  #           admin-sa@admin/dashboard: true        # With service account for AuthzPolicy
+  #         # Pre-defined rules
+  #         definition:
+  #           gateway: true      # From Istio ingress gateway
+  #           monitoring: true   # From Prometheus
+  #
+  #     # Example with custom pod selector
+  #     database:5432:
+  #       podSelector:
+  #         matchLabels:
+  #           app: postgres
+  #           tier: database
+  #       from:
+  #         k8s:
+  #           backend/api: true
 
-tests:
-  enabled: false
+  # Egress rules control outbound traffic from pods
+  # egress:
+  #   # Exclude specific CIDRs from all ipBlock egress policies (except literals)
+  #   excludeCIDRs:
+  #     # The metadata endpoint is the only excluded CIDR by default
+  #     - 169.254.169.254/32
+  #   # Default egress policies (all enabled by default when networkPolicies.enabled is true)
+  #   defaults:
+  #     # Enable/disable all default policies at once
+  #     enabled: true
+  #     # Individual default policies (optional - only specify to disable)
+  #     # denyAll:
+  #     #   enabled: true        # Deny all egress by default
+  #     # allowInNamespace:
+  #     #   enabled: true        # Allow egress within same namespace
+  #     # allowKubeDns:
+  #     #   enabled: true        # Allow DNS resolution (ports 53 TCP/UDP)
+  #     # allowIstiod:
+  #     #   enabled: true        # Allow Istio control plane (port 15012)
+  #
+  #   # Define egress rules for specific pods
+  #   from:
+  #     # Simple example: app pod with various destinations
+  #     app:
+  #       to:
+  #         # Kubernetes shorthand: namespace/pod:port
+  #         k8s:
+  #           backend/api:8080: true              # Single port
+  #           cache/redis:[6379,6380]: true       # Multiple ports
+  #           database/postgres:5432-5440: true   # Port range
+  #           monitoring/*:9090: true             # Any pod in namespace
+  #           "*/coredns:53": true                # Any namespace (has to be quotes since it starts with an asterisk)
+  #
+  #         # CIDR shorthand: IP-range:port
+  #         cidr:
+  #           10.0.0.0/8:443: true               # Private network HTTPS
+  #           0.0.0.0/0:443: true                # Internet (metadata endpoint auto-blocked)
+  #
+  #         # Pre-defined rules
+  #         definition:
+  #           kubeAPI: true                      # Kubernetes API access
+  #
+  #         # Raw NetworkPolicy spec
+  #         literal:
+  #           database:
+  #             enabled: true
+  #             spec:
+  #               - to:
+  #                   - ipBlock:
+  #                       cidr: 10.10.10.10/24
+  #                 ports:
+  #                   - port: 5432
+  #                     protocol: TCP
+  #
+  #     # Example with wildcard selector (all pods)
+  #     "*":
+  #       to:
+  #         k8s:
+  #           logging/elasticsearch:9200: true
 
-waitJob:
-  enabled: false
+  # Custom policy definitions (reusable rules)
+  # egress:
+  #   definitions:
+  #     external-api:
+  #       to:
+  #         - ipBlock:
+  #             cidr: 52.84.0.0/16
+  #       ports:
+  #         - port: 443
+  #           protocol: TCP
+  #   from:
+  #     app:
+  #       to:
+  #         definition:
+  #           external-api: true
+
+  # Additional raw NetworkPolicy resources
+  # additionalPolicies:
+  #   - name: custom-policy
+  #     labels:
+  #       custom: label
+  #     annotations:
+  #       description: "Custom network policy"
+  #     spec:
+  #       podSelector:
+  #         matchLabels:
+  #           role: special
+  #       policyTypes:
+  #         - Egress
+  #       egress:
+  #         - to:
+  #             - ipBlock:
+  #                 cidr: 192.168.0.0/16
