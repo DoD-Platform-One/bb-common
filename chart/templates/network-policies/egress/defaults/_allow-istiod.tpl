@@ -15,9 +15,11 @@ spec:
           kubernetes.io/metadata.name: istio-system
       podSelector:
         matchLabels:
-          app: istiod
+          app.kubernetes.io/name: istiod
     ports:
     - port: 15012
+      protocol: TCP
+    - port: 15014
       protocol: TCP
   policyTypes:
   - Egress
