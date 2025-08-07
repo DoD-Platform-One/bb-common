@@ -112,8 +112,6 @@ tests:
                 ports:
                   - port: 15012
                     protocol: TCP
-                  - port: 15014
-                    protocol: TCP
 
   - it: must create deny-all ingress policy when enabled
     set:
