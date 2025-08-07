@@ -19,8 +19,6 @@ spec:
     ports:
     - port: 15012
       protocol: TCP
-    - port: 15014
-      protocol: TCP
   policyTypes:
   - Egress
 {{- end }}
