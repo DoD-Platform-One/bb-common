@@ -455,6 +455,8 @@ The chart includes pre-configured definitions for common scenarios:
 - **kubeAPI**: Allow access to Kubernetes API server
   - Includes common private network ranges: 10.0.0.0/8, 172.16.0.0/12,
     192.168.0.0/16
+  - Performs a `lookup` to limit connectivity to the ports defined on the
+    `kubernetes` service in the `default` namespace.
 
 ### Ingress Definitions
 
