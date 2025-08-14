@@ -441,6 +441,8 @@ networkPolicies:
         enabled: true # Deny all ingress by default
       allowInNamespace:
         enabled: true # Allow ingress from same namespace
+      allowPrometheusToIstioSidecar:
+        enabled: true # Allow ingress from prometheus in monitoring namespace for sidecar metrics (TCP port 15020)
 ```
 
 > **Important**: You only need to specify these in your values if you want to

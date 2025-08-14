@@ -22,6 +22,8 @@ networkPolicies:
   #     #   enabled: true  # Deny all ingress by default
   #     # allowInNamespace:
   #     #   enabled: true  # Allow ingress from same namespace
+  #     # allowPrometheusToIstioSidecar:
+  #     #   enabled: true  # Allow Prometheus sidecar scraping (port 15020)
   #
   #   # Define ingress rules for specific pods
   #   to:

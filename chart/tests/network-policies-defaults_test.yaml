@@ -7,15 +7,17 @@ release:
   namespace: test
 set:
   networkPolicies.enabled: true
+  networkPolicies.egress.defaults.denyAll.enabled: false
+  networkPolicies.egress.defaults.allowInNamespace.enabled: false
+  networkPolicies.egress.defaults.allowKubeDns.enabled: false
+  networkPolicies.egress.defaults.allowIstiod.enabled: false
+  networkPolicies.ingress.defaults.denyAll.enabled: false
+  networkPolicies.ingress.defaults.allowInNamespace.enabled: false
+  networkPolicies.ingress.defaults.allowPrometheusToIstioSidecar.enabled: false
 tests:
   - it: must create deny-all egress policy when enabled
     set:
       networkPolicies.egress.defaults.denyAll.enabled: true
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     documentSelector:
       path: metadata.name
       value: default-egress-deny-all
@@ -29,12 +31,7 @@ tests:
 
   - it: must create allow-all-in-namespace egress policy when enabled
     set:
-      networkPolicies.egress.defaults.denyAll.enabled: false
       networkPolicies.egress.defaults.allowInNamespace.enabled: true
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     documentSelector:
       path: metadata.name
       value: default-egress-allow-all-in-ns
@@ -53,12 +50,7 @@ tests:
 
   - it: must create allow-kube-dns egress policy when enabled
     set:
-      networkPolicies.egress.defaults.denyAll.enabled: false
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
       networkPolicies.egress.defaults.allowKubeDns.enabled: true
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     documentSelector:
       path: metadata.name
       value: default-egress-allow-kube-dns
@@ -85,12 +77,7 @@ tests:
 
   - it: must create allow-istiod egress policy when enabled
     set:
-      networkPolicies.egress.defaults.denyAll.enabled: false
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
       networkPolicies.egress.defaults.allowIstiod.enabled: true
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     documentSelector:
       path: metadata.name
       value: default-egress-allow-istiod
@@ -116,11 +103,6 @@ tests:
   - it: must create deny-all ingress policy when enabled
     set:
       networkPolicies.ingress.defaults.denyAll.enabled: true
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.denyAll.enabled: false
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
     documentSelector:
       path: metadata.name
       value: default-ingress-deny-all
@@ -134,12 +116,7 @@ tests:
 
   - it: must create allow-all-in-namespace ingress policy when enabled
     set:
-      networkPolicies.ingress.defaults.denyAll.enabled: false
       networkPolicies.ingress.defaults.allowInNamespace.enabled: true
-      networkPolicies.egress.defaults.denyAll.enabled: false
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
     documentSelector:
       path: metadata.name
       value: default-ingress-allow-all-in-ns
@@ -156,14 +133,36 @@ tests:
                       matchLabels:
                         kubernetes.io/metadata.name: test
 
+  - it: must create allow-prometheus ingress policy when enabled
+    set:
+      networkPolicies.ingress.defaults.allowPrometheusToIstioSidecar.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: default-ingress-allow-prometheus-to-istio-sidecar
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                  - namespaceSelector:
+                      matchLabels:
+                        kubernetes.io/metadata.name: monitoring
+                    podSelector:
+                      matchLabels:
+                        app.kubernetes.io/name: prometheus
+                ports:
+                  - port: 15020
+                    protocol: TCP
+
   - it: must create multiple default policies when multiple are enabled
     set:
       networkPolicies.egress.defaults.denyAll.enabled: true
       networkPolicies.egress.defaults.allowInNamespace.enabled: true
       networkPolicies.egress.defaults.allowKubeDns.enabled: true
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     asserts:
       - hasDocuments:
           count: 3
@@ -172,18 +171,15 @@ tests:
     set:
       networkPolicies.egress.defaults.enabled: false
       networkPolicies.ingress.defaults.enabled: false
+      networkPolicies.egress.defaults.allowIstiod.enabled: true
+      networkPolicies.ingress.defaults.denyAll.enabled: true
     asserts:
       - hasDocuments:
           count: 0
 
   - it: must respect individual default policy enable flags
     set:
-      networkPolicies.egress.defaults.denyAll.enabled: false
       networkPolicies.egress.defaults.allowInNamespace.enabled: true
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     asserts:
       - hasDocuments:
           count: 1
@@ -194,11 +190,6 @@ tests:
   - it: must create default policies alongside custom policies
     set:
       networkPolicies.egress.defaults.denyAll.enabled: true
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
       networkPolicies.egress.from.app.to.k8s.backend/db: true
     asserts:
       - hasDocuments:
@@ -217,11 +208,6 @@ tests:
   - it: must include default labels on default policies
     set:
       networkPolicies.egress.defaults.denyAll.enabled: true
-      networkPolicies.egress.defaults.allowInNamespace.enabled: false
-      networkPolicies.egress.defaults.allowKubeDns.enabled: false
-      networkPolicies.egress.defaults.allowIstiod.enabled: false
-      networkPolicies.ingress.defaults.denyAll.enabled: false
-      networkPolicies.ingress.defaults.allowInNamespace.enabled: false
     documentSelector:
       path: metadata.name
       value: default-egress-deny-all
