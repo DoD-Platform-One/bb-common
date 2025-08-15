@@ -184,6 +184,11 @@ custom ones:
 ```yaml
 networkPolicies:
   egress:
+    definitions:
+      my-custom-api:
+        to:
+          k8s:
+            namespace/custom-api:8000
     from:
       my-app:
         to:
@@ -475,6 +480,18 @@ The chart includes pre-configured definitions for common scenarios:
 You can override these default definitions in your values if necessary. Note
 that overriding a definition will replace that definition entirely. It **will
 not be merged** with the existing default definition.
+
+This is what a definition override would look like for the kubeAPI default definition:
+
+```
+networkPolicies
+  egress:
+    definitions:
+      kubeAPI:
+        to:
+          - ipBlock:
+              cidr: 172.16.100.0/24
+```
 
 ## Examples
 
@@ -979,6 +996,11 @@ networkPolicies:
           k8s:
             backend/api:8080: true
 ```
+
+> **Note**: Some rules may need to be in the umbrella template level as a definition vs at the package level.
+> These rules include policies for egress to SSO, Postgresql, or S3 access to name a few.
+> This gives the ability to be overridden once globally and passed down into packages for ease of use.
+> Refer to [this MR](https://repo1.dso.mil/big-bang/bigbang/-/merge_requests/6689/diffs#679c9c413d4749f4bd9d593879d89e405b2e471e) as a working example.
 
 ### Migration Examples
 
