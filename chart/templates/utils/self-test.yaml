@@ -1,0 +1,13 @@
+{{- define "bb-common.utils.self-test" }}
+  {{- range $templateName, $args := .Values.selfTest | default dict }}
+    {{- $manifest := dict }}
+    {{- $_ := set $manifest "apiVersion" "testing.bb-common.bigbang.dev/v1" }}
+    {{- $_ := set $manifest "kind" "TestResult" }}
+    {{- $_ := set $manifest "metadata" (dict "name" $templateName)}}
+    {{- $_ := set $manifest "args" $args }}
+    {{- $_ := set $manifest "result" (include $templateName $args) }}
+    {{- print "---\n" (toYaml $manifest) }}
+  {{- end }}
+{{- end }}
+
+{{- include "bb-common.utils.self-test" $ }}

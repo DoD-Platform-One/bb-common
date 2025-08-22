@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: bb-common.network-policies.name-ports
+templates:
+  - templates/utils/self-test.yaml
+tests:
+  - it: must name empty ports correctly
+    set:
+      selfTest:
+        "bb-common.network-policies.name-ports":
+          - []
+          - false
+    asserts:
+      - equal:
+          path: result
+          value: any-port
+  - it: must name single ports correctly
+    set:
+      selfTest:
+        "bb-common.network-policies.name-ports":
+          - - port: 80
+          - false
+    asserts:
+      - equal:
+          path: result
+          value: port-80
+  - it: must name multiple ports correctly
+    set:
+      selfTest:
+        "bb-common.network-policies.name-ports":
+          - - port: 80
+            - port: 443
+          - false
+    asserts:
+      - equal:
+          path: result
+          value: ports-80-443
+  - it: must name port ranges correctly
+    set:
+      selfTest:
+        "bb-common.network-policies.name-ports":
+          - - port: 8080
+              endPort: 8090
+          - true
+    asserts:
+      - equal:
+          path: result
+          value: ports-8080-thru-8090

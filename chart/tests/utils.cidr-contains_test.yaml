@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: bb-common.utils.cidr-contains
+templates:
+  - templates/utils/self-test.yaml
+tests:
+  - it: must return true when the first CIDR contains the second
+    set:
+      selfTest:
+        "bb-common.utils.cidr-contains":
+          - 10.0.0.0/8
+          - 10.1.0.0/16
+    asserts:
+      - equal:
+          path: result
+          value: "true"
+  - it: must return false when the first CIDR does not contain the second
+    set:
+      selfTest:
+        "bb-common.utils.cidr-contains":
+          - 10.1.0.0/16
+          - 10.0.0.0/8
+    asserts:
+      - equal:
+          path: result
+          value: "false"
+  - it: must return true when the CIDRs are equal
+    set:
+      selfTest:
+        "bb-common.utils.cidr-contains":
+          - 10.0.0.0/8
+          - 10.0.0.0/8
+    asserts:
+      - equal:
+          path: result
+          value: "true"
+  - it: must properly recognize when a CIDR contains the metadata endpoint
+    set:
+      selfTest:
+        "bb-common.utils.cidr-contains":
+          - 160.0.0.0/3
+          - 169.254.169.254/32
+    asserts:
+      - equal:
+          path: result
+          value: "true"
+  - it: must properly recognize when one CIDR barely contains another
+    set:
+      selfTest:
+        "bb-common.utils.cidr-contains":
+          - 169.254.169.254/31
+          - 169.254.169.254/32
+    asserts:
+      - equal:
+          path: result
+          value: "true"
+  - it: must properly recognize when one CIDR is just outside of another
+    set:
+      selfTest:
+        "bb-common.utils.cidr-contains":
+          - 169.254.169.252/31
+          - 169.254.169.254/32
+    asserts:
+      - equal:
+          path: result
+          value: "false"
