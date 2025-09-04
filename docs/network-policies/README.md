@@ -484,7 +484,7 @@ not be merged** with the existing default definition.
 This is what a definition override would look like for the kubeAPI default definition:
 
 ```
-networkPolicies
+networkPolicies:
   egress:
     definitions:
       kubeAPI:
