@@ -190,6 +190,26 @@
                       "type": "object",
                       "description": "Pod selector for the source pods"
                     },
+                    "metadata": {
+                      "type": "object",
+                      "description": "Metadata for generated network policies",
+                      "properties": {
+                        "labels": {
+                          "type": "object",
+                          "description": "Additional labels for generated network policies",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "annotations": {
+                          "type": "object",
+                          "description": "Annotations for generated network policies",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "to": {
                       "type": "object",
                       "description": "Egress destinations",
@@ -206,6 +226,34 @@
                                   "properties": {
                                     "enabled": {
                                       "type": "boolean"
+                                    },
+                                    "metadata": {
+                                      "type": "object",
+                                      "description": "Metadata for generated network policies",
+                                      "properties": {
+                                        "labels": {
+                                          "type": "object",
+                                          "description": "Additional labels for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "annotations": {
+                                          "type": "object",
+                                          "description": "Annotations for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "podSelector": {
+                                      "type": "object",
+                                      "description": "Override pod selector for the destination"
+                                    },
+                                    "namespaceSelector": {
+                                      "type": "object",
+                                      "description": "Override namespace selector for the destination"
                                     }
                                   }
                                 }
@@ -226,6 +274,26 @@
                                   "properties": {
                                     "enabled": {
                                       "type": "boolean"
+                                    },
+                                    "metadata": {
+                                      "type": "object",
+                                      "description": "Metadata for generated network policies",
+                                      "properties": {
+                                        "labels": {
+                                          "type": "object",
+                                          "description": "Additional labels for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "annotations": {
+                                          "type": "object",
+                                          "description": "Annotations for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
                                     }
                                   }
                                 }
@@ -246,6 +314,26 @@
                                   "properties": {
                                     "enabled": {
                                       "type": "boolean"
+                                    },
+                                    "metadata": {
+                                      "type": "object",
+                                      "description": "Metadata for generated network policies",
+                                      "properties": {
+                                        "labels": {
+                                          "type": "object",
+                                          "description": "Additional labels for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "annotations": {
+                                          "type": "object",
+                                          "description": "Annotations for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
                                     }
                                   }
                                 }
@@ -263,6 +351,20 @@
                               "properties": {
                                 "enabled": {
                                   "type": "boolean"
+                                },
+                                "labels": {
+                                  "type": "object",
+                                  "description": "Additional labels for generated network policies",
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
+                                },
+                                "annotations": {
+                                  "type": "object",
+                                  "description": "Annotations for generated network policies",
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
                                 },
                                 "spec": {
                                   "type": "array",
@@ -412,6 +514,26 @@
                       "type": "object",
                       "description": "Pod selector for the destination pods"
                     },
+                    "metadata": {
+                      "type": "object",
+                      "description": "Metadata for generated network policies",
+                      "properties": {
+                        "labels": {
+                          "type": "object",
+                          "description": "Additional labels for generated network policies",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "annotations": {
+                          "type": "object",
+                          "description": "Annotations for generated network policies",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "from": {
                       "type": "object",
                       "description": "Ingress sources",
@@ -428,6 +550,34 @@
                                   "properties": {
                                     "enabled": {
                                       "type": "boolean"
+                                    },
+                                    "metadata": {
+                                      "type": "object",
+                                      "description": "Metadata for generated network policies",
+                                      "properties": {
+                                        "labels": {
+                                          "type": "object",
+                                          "description": "Additional labels for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "annotations": {
+                                          "type": "object",
+                                          "description": "Annotations for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "podSelector": {
+                                      "type": "object",
+                                      "description": "Override pod selector for the source"
+                                    },
+                                    "namespaceSelector": {
+                                      "type": "object",
+                                      "description": "Override namespace selector for the source"
                                     }
                                   }
                                 }
@@ -448,6 +598,26 @@
                                   "properties": {
                                     "enabled": {
                                       "type": "boolean"
+                                    },
+                                    "metadata": {
+                                      "type": "object",
+                                      "description": "Metadata for generated network policies",
+                                      "properties": {
+                                        "labels": {
+                                          "type": "object",
+                                          "description": "Additional labels for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "annotations": {
+                                          "type": "object",
+                                          "description": "Annotations for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
                                     }
                                   }
                                 }
@@ -468,6 +638,26 @@
                                   "properties": {
                                     "enabled": {
                                       "type": "boolean"
+                                    },
+                                    "metadata": {
+                                      "type": "object",
+                                      "description": "Metadata for generated network policies",
+                                      "properties": {
+                                        "labels": {
+                                          "type": "object",
+                                          "description": "Additional labels for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "annotations": {
+                                          "type": "object",
+                                          "description": "Annotations for generated network policies",
+                                          "additionalProperties": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
                                     }
                                   }
                                 }
@@ -485,6 +675,20 @@
                               "properties": {
                                 "enabled": {
                                   "type": "boolean"
+                                },
+                                "labels": {
+                                  "type": "object",
+                                  "description": "Additional labels for generated network policies",
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
+                                },
+                                "annotations": {
+                                  "type": "object",
+                                  "description": "Annotations for generated network policies",
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
                                 },
                                 "spec": {
                                   "type": "array",

@@ -249,3 +249,792 @@ tests:
               - port: 8443
                 protocol: TCP
 
+  - it: must allow adding custom labels and annotations for egress policies using the local key with k8s remotes
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        to:
+          k8s:
+            kube-system/kube-dns:53: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-ns-kube-system-pod-kube-dns-tcp-port-53
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the local key with cidr remotes
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        to:
+          cidr:
+            192.168.100.1/32: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-cidr-192-168-100-1-32-any-port
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the local key with definition remotes
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        to:
+          definition:
+            kubeAPI: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-kubeapi
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the local key with literal remotes
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        to:
+          literal:
+            prod-or-staging:
+              enabled: true
+              spec: 
+                - to:
+                    - namespaceSelector:
+                        matchExpressions:
+                          - key: environment
+                            operator: In
+                            values: ["production", "staging"]
+                      podSelector:
+                        matchLabels:
+                          tier: backend
+                  ports:
+                    - port: 443
+                      protocol: TCP
+                    - port: 8443
+                      protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-prod-or-staging
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the local key with k8s remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        from:
+          k8s:
+            somewhere/else: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-tcp-port-8080-from-ns-somewhere-pod-else
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the local key with cidr remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        from:
+          cidr:
+            10.0.0.0/8: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-tcp-port-8080-from-cidr-10-0-0-0-8
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the local key with definition remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        from:
+          definition:
+            gateway: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-port-8080-from-gateway
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the local key with literal remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            my-label: app
+          annotations:
+            my-annotation: also-app
+        from:
+          literal:
+            monitoring-pods:
+              enabled: true
+              spec:
+                - from:
+                    - namespaceSelector:
+                        matchLabels:
+                          purpose: monitoring
+                      podSelector:
+                        matchLabels:
+                          app: prometheus
+                  ports:
+                    - port: 8080
+                      protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-from-monitoring-pods
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the remote key with k8s remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        from:
+          k8s:
+            somewhere/else: 
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-tcp-port-8080-from-ns-somewhere-pod-else
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the remote key with cidr remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        from:
+          cidr:
+            10.0.0.0/8:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-tcp-port-8080-from-cidr-10-0-0-0-8
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the remote key with definition remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        from:
+          definition:
+            gateway:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-port-8080-from-gateway
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for ingress policies using the remote key with literal remotes
+    set:
+      networkPolicies.ingress.to.app:8080:
+        from:
+          literal:
+            monitoring-pods:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+              spec:
+                - from:
+                    - namespaceSelector:
+                        matchLabels:
+                          purpose: monitoring
+                      podSelector:
+                        matchLabels:
+                          app: prometheus
+                  ports:
+                    - port: 8080
+                      protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-from-monitoring-pods
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the remote key with k8s remotes
+    set:
+      networkPolicies.egress.from.app:
+        to:
+          k8s:
+            kube-system/kube-dns:53:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-ns-kube-system-pod-kube-dns-tcp-port-53
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the remote key with cidr remotes
+    set:
+      networkPolicies.egress.from.app:
+        to:
+          cidr:
+            192.168.100.1/32:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-cidr-192-168-100-1-32-any-port
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the remote key with definition remotes
+    set:
+      networkPolicies.egress.from.app:
+        to:
+          definition:
+            kubeAPI:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-kubeapi
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must allow adding custom labels and annotations for egress policies using the remote key with literal remotes
+    set:
+      networkPolicies.egress.from.app:
+        to:
+          literal:
+            prod-or-staging:
+              enabled: true
+              metadata:
+                labels:
+                  my-label: app
+                annotations:
+                  my-annotation: also-app
+              spec: 
+                - to:
+                    - namespaceSelector:
+                        matchExpressions:
+                          - key: environment
+                            operator: In
+                            values: ["production", "staging"]
+                      podSelector:
+                        matchLabels:
+                          tier: backend
+                  ports:
+                    - port: 443
+                      protocol: TCP
+                    - port: 8443
+                      protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-prod-or-staging
+    asserts:
+      - equal:
+          path: metadata.labels.my-label
+          value: app
+      - equal:
+          path: metadata.annotations.my-annotation
+          value: also-app
+
+  - it: must override local labels and annotations with remote labels and annotations for egress k8s policies
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        to:
+          k8s:
+            kube-system/kube-dns:53:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-ns-kube-system-pod-kube-dns-tcp-port-53
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for egress cidr policies
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        to:
+          cidr:
+            192.168.100.1/32:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-cidr-192-168-100-1-32-any-port
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for egress definition policies
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        to:
+          definition:
+            kubeAPI:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-kubeapi
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for egress literal policies
+    set:
+      networkPolicies.egress.from.app:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        to:
+          literal:
+            prod-or-staging:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+              spec: 
+                - to:
+                    - namespaceSelector:
+                        matchExpressions:
+                          - key: environment
+                            operator: In
+                            values: ["production", "staging"]
+                      podSelector:
+                        matchLabels:
+                          tier: backend
+                  ports:
+                    - port: 443
+                      protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-app-to-prod-or-staging
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for ingress k8s policies
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        from:
+          k8s:
+            somewhere/else:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-tcp-port-8080-from-ns-somewhere-pod-else
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for ingress cidr policies
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        from:
+          cidr:
+            10.0.0.0/8:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-tcp-port-8080-from-cidr-10-0-0-0-8
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for ingress definition policies
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        from:
+          definition:
+            gateway:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-port-8080-from-gateway
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value
+
+  - it: must override local labels and annotations with remote labels and annotations for ingress literal policies
+    set:
+      networkPolicies.ingress.to.app:8080:
+        metadata:
+          labels:
+            shared-label: local-value
+            local-only: local-value
+          annotations:
+            shared-annotation: local-value
+            local-only-annotation: local-value
+        from:
+          literal:
+            monitoring-pods:
+              enabled: true
+              metadata:
+                labels:
+                  shared-label: remote-value
+                  remote-only: remote-value
+                annotations:
+                  shared-annotation: remote-value
+                  remote-only-annotation: remote-value
+              spec:
+                - from:
+                    - namespaceSelector:
+                        matchLabels:
+                          purpose: monitoring
+                      podSelector:
+                        matchLabels:
+                          app: prometheus
+                  ports:
+                    - port: 8080
+                      protocol: TCP
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-app-from-monitoring-pods
+    asserts:
+      - equal:
+          path: metadata.labels.shared-label
+          value: remote-value
+      - equal:
+          path: metadata.labels.local-only
+          value: local-value
+      - equal:
+          path: metadata.labels.remote-only
+          value: remote-value
+      - equal:
+          path: metadata.annotations.shared-annotation
+          value: remote-value
+      - equal:
+          path: metadata.annotations.local-only-annotation
+          value: local-value
+      - equal:
+          path: metadata.annotations.remote-only-annotation
+          value: remote-value

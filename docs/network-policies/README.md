@@ -44,6 +44,12 @@ namespaces, and external resources.
     - [Advanced Port Patterns](#advanced-port-patterns)
     - [Custom Pod Selectors](#custom-pod-selectors)
     - [Custom Definitions](#custom-definitions)
+    - [Custom Labels and Annotations](#custom-labels-and-annotations)
+      - [Local Key Labels and Annotations](#local-key-labels-and-annotations)
+      - [Remote Key Labels and Annotations](#remote-key-labels-and-annotations)
+      - [Label and Annotation Override Behavior](#label-and-annotation-override-behavior)
+      - [Support Across All Remote Types](#support-across-all-remote-types)
+      - [Common Use Cases](#common-use-cases)
     - [Spec Literals](#spec-literals)
     - [Additional Policies](#additional-policies)
     - [SPIFFE-based AuthorizationPolicies](#spiffe-based-authorizationpolicies)
@@ -52,6 +58,8 @@ namespaces, and external resources.
       - [AuthorizationPolicy Examples](#authorizationpolicy-examples)
       - [Important Notes](#important-notes)
   - [Labels and Annotations](#labels-and-annotations)
+    - [Built-in Labels and Annotations](#built-in-labels-and-annotations)
+    - [Customizing Labels and Annotations](#customizing-labels-and-annotations)
   - [Migration Guide](#migration-guide)
     - [Using bb-common as a Subchart](#using-bb-common-as-a-subchart)
       - [Step 1: Add bb-common to Chart.yaml](#step-1-add-bb-common-to-chartyaml)
@@ -481,7 +489,8 @@ You can override these default definitions in your values if necessary. Note
 that overriding a definition will replace that definition entirely. It **will
 not be merged** with the existing default definition.
 
-This is what a definition override would look like for the kubeAPI default definition:
+This is what a definition override would look like for the kubeAPI default
+definition:
 
 ```
 networkPolicies
@@ -729,6 +738,297 @@ networkPolicies:
             internal-monitoring: true
 ```
 
+### Custom Labels and Annotations
+
+The network policy framework provides flexible support for adding custom labels
+and annotations to generated NetworkPolicy resources. This is useful for
+integration with monitoring tools, policy management systems, or organizational
+requirements.
+
+#### Local Key Labels and Annotations
+
+Apply labels and annotations to all policies generated from a specific local key
+(source pod):
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      app:
+        metadata:
+          labels:
+            policy-type: egress
+            team: backend
+          annotations:
+            description: Egress policies for app service
+            contact: backend-team@company.com
+        to:
+          k8s:
+            backend/api:8080: true # Gets labels/annotations above
+            backend/db:5432: true # Gets labels/annotations above
+          cidr:
+            52.84.0.0/16:443: true # Gets labels/annotations above
+
+  ingress:
+    to:
+      api:8080:
+        metadata:
+          labels:
+            policy-type: ingress
+            service: api
+          annotations:
+            description: Ingress policies for API service
+        from:
+          k8s:
+            frontend/web: true # Gets labels/annotations above
+            admin/dashboard: true # Gets labels/annotations above
+```
+
+#### Remote Key Labels and Annotations
+
+Apply labels and annotations to specific remote rules by configuring them on
+individual remote targets:
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      app:
+        to:
+          k8s:
+            backend/api:8080:
+              enabled: true
+              metadata:
+                labels:
+                  priority: high
+                  service-type: api
+                annotations:
+                  description: Critical API connection
+            backend/cache:6379:
+              enabled: true
+              metadata:
+                labels:
+                  priority: medium
+                  service-type: cache
+                annotations:
+                  description: Cache connection
+          cidr:
+            52.84.0.0/16:443:
+              enabled: true
+              metadata:
+                labels:
+                  external: true
+                annotations:
+                  description: External API access
+
+  ingress:
+    to:
+      api:8080:
+        from:
+          k8s:
+            frontend/web:
+              enabled: true
+              metadata:
+                labels:
+                  source-type: frontend
+                annotations:
+                  description: Frontend web traffic
+          definition:
+            monitoring:
+              enabled: true
+              metadata:
+                labels:
+                  source-type: monitoring
+                annotations:
+                  description: Prometheus metrics collection
+```
+
+#### Label and Annotation Override Behavior
+
+When both local and remote labels/annotations are specified, the framework
+follows these rules:
+
+1. **Local labels/annotations** are applied first
+2. **Remote labels/annotations** override local ones when keys conflict
+3. **Unique keys** from both local and remote are preserved
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      app:
+        metadata:
+          labels:
+            shared-key: local-value # Will be overridden
+            local-only: local-value # Will be preserved
+          annotations:
+            shared-annotation: local-value # Will be overridden
+            local-only-annotation: local-value # Will be preserved
+        to:
+          k8s:
+            backend/api:8080:
+              enabled: true
+              metadata:
+                labels:
+                  shared-key: remote-value # Overrides local value
+                  remote-only: remote-value # Added to final policy
+                annotations:
+                  shared-annotation: remote-value # Overrides local value
+                  remote-only-annotation: remote-value # Added to final policy
+
+# Results in a policy with:
+# labels:
+#   shared-key: remote-value      # Remote override
+#   local-only: local-value       # Local preserved
+#   remote-only: remote-value     # Remote added
+# annotations:
+#   shared-annotation: remote-value      # Remote override
+#   local-only-annotation: local-value   # Local preserved
+#   remote-only-annotation: remote-value # Remote added
+```
+
+#### Support Across All Remote Types
+
+Labels and annotations work with all remote rule types:
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      app:
+        metadata:
+          labels:
+            app: my-app
+        to:
+          # Kubernetes rules
+          k8s:
+            backend/api:8080:
+              enabled: true
+              metadata:
+                labels:
+                  remote-type: k8s
+
+          # CIDR rules
+          cidr:
+            10.0.0.0/8:443:
+              enabled: true
+              metadata:
+                labels:
+                  remote-type: cidr
+
+          # Definition rules
+          definition:
+            kubeAPI:
+              enabled: true
+              metadata:
+                labels:
+                  remote-type: definition
+
+          # Literal rules
+          literal:
+            custom-rule:
+              enabled: true
+              metadata:
+                labels:
+                  remote-type: literal
+              spec:
+                - to:
+                    - ipBlock:
+                        cidr: 192.168.1.0/24
+                  ports:
+                    - port: 443
+                      protocol: TCP
+```
+
+#### Common Use Cases
+
+**Policy Management Integration:**
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      app:
+        metadata:
+          labels:
+            policy-manager: kustomize
+            managed-by: platform-team
+          annotations:
+            policy-version: v1.2.0
+            last-updated: 2024-01-15
+```
+
+**Monitoring and Alerting:**
+
+```yaml
+networkPolicies:
+  ingress:
+    to:
+      api:8080:
+        metadata:
+          labels:
+            monitoring: enabled
+            alert-level: critical
+          annotations:
+            prometheus.io/scrape: true
+            alert-description: API service network policy
+```
+
+**Compliance and Auditing:**
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      payment-service:
+        metadata:
+          labels:
+            compliance: pci-dss
+            data-classification: sensitive
+          annotations:
+            audit-required: true
+            compliance-framework: PCI-DSS v4.0
+```
+
+**Helm Hook Integration:**
+
+Custom labels and annotations are particularly useful for Helm hook scenarios,
+allowing you to control the lifecycle and execution order of network policies
+relative to other resources:
+
+```yaml
+networkPolicies:
+  egress:
+    from:
+      app:
+        metadata:
+          labels:
+            app.kubernetes.io/managed-by: Helm
+          annotations:
+            helm.sh/hook: pre-install,pre-upgrade
+            helm.sh/hook-weight: -5
+            helm.sh/hook-delete-policy: before-hook-creation
+        to:
+          k8s:
+            database/postgres:5432:
+              enabled: true
+              metadata:
+                annotations:
+                  helm.sh/hook: post-install
+                  helm.sh/hook-weight: 1
+                  description: Database access after app deployment
+```
+
+This enables scenarios such as:
+
+- **Pre-deployment policies**: Apply restrictive policies before application
+  deployment
+- **Post-deployment access**: Enable specific connections only after services
+  are ready
+- **Cleanup hooks**: Remove temporary policies during upgrades or uninstalls
+- **Weighted execution**: Control the order of policy application relative to
+  other resources
+
 ### Spec Literals
 
 For complex scenarios not covered by any of the shorthands, use a raw
@@ -771,7 +1071,7 @@ networkPolicies:
       labels:
         custom: label
       annotations:
-        description: "Custom network policy"
+        description: Custom network policy
       spec:
         podSelector:
           matchLabels:
@@ -911,13 +1211,26 @@ networkPolicies:
 
 ## Labels and Annotations
 
-All generated policies include these labels:
+### Built-in Labels and Annotations
+
+All generated policies automatically include these labels:
 
 - `network-policies.bigbang.dev/source: bb-common`
 - `network-policies.bigbang.dev/direction: <egress|ingress>`
 
 They'll also include various `generated.network-policies.bigbang.dev`
 annotations based on their exact configuration.
+
+### Customizing Labels and Annotations
+
+The framework provides comprehensive support for adding custom labels and
+annotations to your network policies. This feature supports both local (applied
+to all policies from a source) and remote (applied to specific rules)
+configurations, with intelligent override behavior when both are specified.
+
+For detailed information on using custom labels and annotations, see the
+[Custom Labels and Annotations](#custom-labels-and-annotations) section in the
+Advanced Features.
 
 ## Migration Guide
 
@@ -997,10 +1310,13 @@ networkPolicies:
             backend/api:8080: true
 ```
 
-> **Note**: Some rules may need to be in the umbrella template level as a definition vs at the package level.
-> These rules include policies for egress to SSO, Postgresql, or S3 access to name a few.
-> This gives the ability to be overridden once globally and passed down into packages for ease of use.
-> Refer to [this MR](https://repo1.dso.mil/big-bang/bigbang/-/merge_requests/6689/diffs#679c9c413d4749f4bd9d593879d89e405b2e471e) as a working example.
+> **Note**: Some rules may need to be in the umbrella template level as a
+> definition vs at the package level. These rules include policies for egress to
+> SSO, Postgresql, or S3 access to name a few. This gives the ability to be
+> overridden once globally and passed down into packages for ease of use. Refer
+> to
+> [this MR](https://repo1.dso.mil/big-bang/bigbang/-/merge_requests/6689/diffs#679c9c413d4749f4bd9d593879d89e405b2e471e)
+> as a working example.
 
 ### Migration Examples
 
