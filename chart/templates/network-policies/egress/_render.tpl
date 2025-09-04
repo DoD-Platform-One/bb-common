@@ -11,8 +11,8 @@
     {{- $local := $localKey }}
 
     {{- /* Process k8s rules */}}
-    {{- range $remoteKey, $remoteValue := dig "to" "k8s" dict $localConfig }}
-      {{- $isEnabled := or (and (kindIs "map" $remoteValue) (dig "enabled" false $remoteValue)) (and (kindIs "bool" $remoteValue) $remoteValue) }}
+    {{- range $remoteKey, $remoteConfig := dig "to" "k8s" dict $localConfig }}
+      {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" false $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
       {{- if not $isEnabled }}
         {{- continue }}
       {{- end }}
@@ -26,14 +26,15 @@
       {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
       {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 
-      {{- $args := list $ctx $netpol $remoteKey $remoteValue $name $labels $annotations $local }}
+      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
       {{- $netpol = include "bb-common.network-policies.egress.generate.from-k8s-shorthand" $args | fromYaml }}
+      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
       {{- $netpols = append $netpols $netpol }}
     {{- end }}
 
     {{- /* Process cidr rules */}}
-    {{- range $remoteKey, $remoteValue := dig "to" "cidr" dict $localConfig }}
-      {{- $isEnabled := or (and (kindIs "map" $remoteValue) (dig "enabled" false $remoteValue)) (and (kindIs "bool" $remoteValue) $remoteValue) }}
+    {{- range $remoteKey, $remoteConfig := dig "to" "cidr" dict $localConfig }}
+      {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" false $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
       {{- if not $isEnabled }}
         {{- continue }}
       {{- end }}
@@ -47,14 +48,15 @@
       {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
       {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 
-      {{- $args := list $ctx $netpol $remoteKey $remoteValue $name $labels $annotations $local }}
+      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
       {{- $netpol = include "bb-common.network-policies.egress.generate.from-cidr-shorthand" $args | fromYaml }}
+      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
       {{- $netpols = append $netpols $netpol }}
     {{- end }}
 
     {{- /* Process definition rules */}}
-    {{- range $remoteKey, $remoteValue := dig "to" "definition" dict $localConfig }}
-      {{- $isEnabled := or (and (kindIs "map" $remoteValue) (dig "enabled" false $remoteValue)) (and (kindIs "bool" $remoteValue) $remoteValue) }}
+    {{- range $remoteKey, $remoteConfig := dig "to" "definition" dict $localConfig }}
+      {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" false $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
       {{- if not $isEnabled }}
         {{- continue }}
       {{- end }}
@@ -68,14 +70,15 @@
       {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
       {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 
-      {{- $args := list $ctx $netpol $remoteKey $remoteValue $name $labels $annotations $local }}
+      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
       {{- $netpol = include "bb-common.network-policies.egress.generate.from-definition" $args | fromYaml }}
+      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
       {{- $netpols = append $netpols $netpol }}
     {{- end }}
 
     {{- /* Process literal rules */}}
-    {{- range $remoteKey, $remoteValue := dig "to" "literal" dict $localConfig }}
-      {{- $isEnabled := dig "enabled" false $remoteValue }}
+    {{- range $remoteKey, $remoteConfig := dig "to" "literal" dict $localConfig }}
+      {{- $isEnabled := dig "enabled" false $remoteConfig }}
       {{- if not $isEnabled }}
         {{- continue }}
       {{- end }}
@@ -89,8 +92,9 @@
       {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
       {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 
-      {{- $args := list $ctx $netpol $remoteKey $remoteValue $name $labels $annotations $local }}
+      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
       {{- $netpol = include "bb-common.network-policies.egress.generate.from-spec-literal" $args | fromYaml }}
+      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
       {{- $netpols = append $netpols $netpol }}
     {{- end }}
   {{- end }}

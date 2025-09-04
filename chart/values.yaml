@@ -29,6 +29,13 @@ networkPolicies:
   #   to:
   #     # Simple example: API pod accepts traffic on port 8080
   #     api:8080:
+  #       # Custom labels and annotations for generated NetworkPolicies
+  #       metadata:
+  #         labels:
+  #           team: backend
+  #           environment: production
+  #         annotations:
+  #           description: "API ingress policies"
   #       from:
   #         # Kubernetes shorthand: namespace/pod or identity@namespace/pod
   #         k8s:
@@ -74,10 +81,24 @@ networkPolicies:
   #   from:
   #     # Simple example: app pod with various destinations
   #     app:
+  #       # Custom labels and annotations for generated NetworkPolicies
+  #       metadata:
+  #         labels:
+  #           component: application
+  #           tier: frontend
+  #         annotations:
+  #           owner: "platform-team"
   #       to:
   #         # Kubernetes shorthand: namespace/pod:port
   #         k8s:
-  #           backend/api:8080: true              # Single port
+  #           backend/api:8080: 
+  #             enabled: true
+  #             # Custom labels/annotations can also be applied to individual rules
+  #             metadata:
+  #               labels:
+  #                 rule-type: api-access
+  #               annotations:
+  #                 description: "Access to backend API"
   #           cache/redis:[6379,6380]: true       # Multiple ports
   #           database/postgres:5432-5440: true   # Port range
   #           monitoring/*:9090: true             # Any pod in namespace
