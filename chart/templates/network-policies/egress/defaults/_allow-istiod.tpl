@@ -15,7 +15,7 @@ spec:
           kubernetes.io/metadata.name: istio-system
       podSelector:
         matchLabels:
-          app.kubernetes.io/name: istiod
+          app: istiod
     ports:
     - port: 15012
       protocol: TCP
