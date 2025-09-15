@@ -1,11 +1,37 @@
 {{- define "bb-common.utils.self-test" }}
-  {{- range $templateName, $args := .Values.selfTest | default dict }}
+  {{- range $templateName, $config := .Values.selfTest | default dict }}
     {{- $manifest := dict }}
     {{- $_ := set $manifest "apiVersion" "testing.bb-common.bigbang.dev/v1" }}
     {{- $_ := set $manifest "kind" "TestResult" }}
     {{- $_ := set $manifest "metadata" (dict "name" $templateName)}}
+
+    {{- $args := $config }}
+    {{- $resultIsYaml := false }}
+
+    {{- if kindIs "map" $config }}
+      {{- if hasKey $config "args" }}
+        {{- $args = $config.args }}
+      {{- end }}
+      {{- if hasKey $config "resultIsYaml" }}
+        {{- $resultIsYaml = $config.resultIsYaml }}
+      {{- end }}
+    {{- end }}
+
     {{- $_ := set $manifest "args" $args }}
-    {{- $_ := set $manifest "result" (include $templateName $args) }}
+
+    {{- $result := include $templateName $args }}
+    {{- if $resultIsYaml }}
+      {{- $isArray := (regexMatch "^\\s*-" $result) }}
+
+      {{- if $isArray }}
+        {{- $_ := set $manifest "result" ($result | fromYamlArray) }}
+      {{- else }}
+        {{- $_ := set $manifest "result" ($result | fromYaml) }}
+      {{- end }}
+    {{- else }}
+      {{- $_ := set $manifest "result" $result }}
+    {{- end }}
+    
     {{- print "---\n" (toYaml $manifest) }}
   {{- end }}
 {{- end }}

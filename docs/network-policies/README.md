@@ -461,6 +461,32 @@ networkPolicies:
 > **Important**: You only need to specify these in your values if you want to
 > **disable** specific defaults. They are all enabled automatically.
 
+##### Default Policy Hook Creation
+
+```yaml
+networkPolicies:
+  # Hook creation configuration for default policies
+  defaultsAsHooks:
+    enabled: false # Create hook versions of default policies IN ADDITION to regular versions (default: false)
+    hooks: # Hook types (default: ["pre-install", "pre-upgrade", "post-delete"])
+      - pre-install
+      - pre-upgrade
+      - post-delete
+    weight: -5 # Hook execution weight (default: -5)
+    deletePolicies: # Hook delete policies (default: ["hook-succeeded", "before-hook-creation"])
+      - hook-succeeded
+      - before-hook-creation
+```
+
+When `defaultsAsHooks.enabled` is `true`, the chart will create **both** regular
+NetworkPolicy resources **and** additional hook versions of each enabled default
+policy. The hook versions have `-as-hook` appended to their names and include
+the appropriate Helm hook annotations.
+
+This allows default policies to be applied at specific lifecycle points (e.g.,
+before application deployment) while maintaining the regular policies for
+ongoing enforcement.
+
 ## Built-in Definitions
 
 The chart includes pre-configured definitions for common scenarios:

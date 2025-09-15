@@ -3,6 +3,14 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.7.0] - 2025-09-10
+
+### Added
+
+- Configured the default egress policies to be available during helm hook phases
+- Added documentation about the self-test feature
+- Updated the self-test feature to make it more versatile and usable in more situations
+
 ## [0.6.1] - 2025-09-04
 
 ### Changed

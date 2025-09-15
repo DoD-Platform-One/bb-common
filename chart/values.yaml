@@ -3,11 +3,11 @@ networkPolicies:
   # Enable/disable the generation of NetworkPolicies
   enabled: false
 
-  # Prepend release name to all generated NetworkPolicy names
-  # Useful when deploying multiple releases in the same namespace
+  # # Prepend release name to all generated NetworkPolicy names
+  # # Useful when deploying multiple releases in the same namespace
   # prependReleaseName: false
 
-  # Ingress rules control inbound traffic to pods
+  # # Ingress rules control inbound traffic to pods
   # ingress:
   #   # Generate Istio AuthorizationPolicies alongside NetworkPolicies
   #   # Requires service account identity prefix (e.g., sa@namespace/pod)
@@ -17,7 +17,7 @@ networkPolicies:
   #   defaults:
   #     # Enable/disable all default policies at once
   #     enabled: true
-  #     # Individual default policies (optional - only specify to disable)
+  #     # # Individual default policies (optional - only specify to disable)
   #     # denyAll:
   #     #   enabled: true  # Deny all ingress by default
   #     # allowInNamespace:
@@ -57,7 +57,7 @@ networkPolicies:
   #         k8s:
   #           backend/api: true
 
-  # Egress rules control outbound traffic from pods
+  # # Egress rules control outbound traffic from pods
   # egress:
   #   # Exclude specific CIDRs from all ipBlock egress policies (except literals)
   #   excludeCIDRs:
@@ -67,7 +67,7 @@ networkPolicies:
   #   defaults:
   #     # Enable/disable all default policies at once
   #     enabled: true
-  #     # Individual default policies (optional - only specify to disable)
+  #     # # Individual default policies (optional - only specify to disable)
   #     # denyAll:
   #     #   enabled: true        # Deny all egress by default
   #     # allowInNamespace:
@@ -76,6 +76,18 @@ networkPolicies:
   #     #   enabled: true        # Allow DNS resolution (ports 53 TCP/UDP)
   #     # allowIstiod:
   #     #   enabled: true        # Allow Istio control plane (port 15012)
+  #
+  # # Hook creation configuration for default policies
+  # defaultsAsHooks:
+  #   enabled: true              # Create hook versions IN ADDITION to regular versions (default: false)
+  #   hooks:                     # Hook types (default: ["pre-install", "pre-upgrade", "post-delete"])
+  #     - pre-install
+  #     - pre-upgrade
+  #     - post-delete
+  #   weight: -5                 # Hook execution weight (default: -5)
+  #   deletePolicies:            # Hook delete policies (default: ["hook-succeeded", "before-hook-creation"])
+  #     - hook-succeeded
+  #     - before-hook-creation
   #
   #   # Define egress rules for specific pods
   #   from:
@@ -131,7 +143,7 @@ networkPolicies:
   #         k8s:
   #           logging/elasticsearch:9200: true
 
-  # Custom policy definitions (reusable rules)
+  # # Custom policy definitions (reusable rules)
   # egress:
   #   definitions:
   #     external-api:
@@ -147,7 +159,7 @@ networkPolicies:
   #         definition:
   #           external-api: true
 
-  # Additional raw NetworkPolicy resources
+  # # Additional raw NetworkPolicy resources
   # additionalPolicies:
   #   - name: custom-policy
   #     labels:
