@@ -219,3 +219,161 @@ tests:
           path: metadata.labels["network-policies.bigbang.dev/direction"]
           value: egress
 
+  - it: must create hook versions of default policies when defaultsAsHooks is enabled
+    set:
+      networkPolicies.egress.defaults.denyAll.enabled: true
+      networkPolicies.egress.defaults.allowInNamespace.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 4  # 2 regular + 2 hook versions
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-egress-deny-all
+          any: true
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-egress-deny-all-as-hook
+          any: true
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-egress-allow-all-in-ns-as-hook
+          any: true
+
+  - it: must add correct hook annotations to hook versions
+    set:
+      networkPolicies.egress.defaults.denyAll.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: true
+      networkPolicies.defaultsAsHooks.hooks:
+        - pre-install
+        - pre-upgrade
+      networkPolicies.defaultsAsHooks.weight: -10
+      networkPolicies.defaultsAsHooks.deletePolicies:
+        - hook-succeeded
+    documentSelector:
+      path: metadata.name
+      value: default-egress-deny-all-as-hook
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-10"
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded
+
+  - it: must not create hook versions when defaultsAsHooks is disabled
+    set:
+      networkPolicies.egress.defaults.denyAll.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-egress-deny-all
+          any: true
+
+  - it: must use default hook configuration when not specified
+    set:
+      networkPolicies.egress.defaults.denyAll.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: default-egress-deny-all-as-hook
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade,post-delete
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-5"
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded,before-hook-creation
+
+  - it: must create hook versions of default ingress policies when defaultsAsHooks is enabled
+    set:
+      networkPolicies.ingress.defaults.denyAll.enabled: true
+      networkPolicies.ingress.defaults.allowInNamespace.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 4  # 2 regular + 2 hook versions
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-ingress-deny-all
+          any: true
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-ingress-deny-all-as-hook
+          any: true
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-ingress-allow-all-in-ns-as-hook
+          any: true
+
+  - it: must add correct hook annotations to ingress hook versions
+    set:
+      networkPolicies.ingress.defaults.denyAll.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: true
+      networkPolicies.defaultsAsHooks.hooks:
+        - pre-install
+        - pre-upgrade
+      networkPolicies.defaultsAsHooks.weight: -10
+      networkPolicies.defaultsAsHooks.deletePolicies:
+        - hook-succeeded
+    documentSelector:
+      path: metadata.name
+      value: default-ingress-deny-all-as-hook
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-10"
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded
+
+  - it: must not create ingress hook versions when defaultsAsHooks is disabled
+    set:
+      networkPolicies.ingress.defaults.denyAll.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: default-ingress-deny-all
+          any: true
+
+  - it: must use default hook configuration for ingress when not specified
+    set:
+      networkPolicies.ingress.defaults.denyAll.enabled: true
+      networkPolicies.defaultsAsHooks.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: default-ingress-deny-all-as-hook
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade,post-delete
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-5"
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded,before-hook-creation
+

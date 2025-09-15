@@ -47,6 +47,54 @@
           "description": "Prepend release name to network policy names",
           "default": false
         },
+        "defaultsAsHooks": {
+          "type": "object",
+          "description": "Create hook versions of default policies in addition to regular versions",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable hook creation for default policies (creates both regular and hook versions)",
+              "default": false
+            },
+            "hooks": {
+              "type": "array",
+              "description": "Helm hook types",
+              "default": ["pre-install", "pre-upgrade", "post-delete"],
+              "items": {
+                "type": "string",
+                "enum": [
+                  "pre-install",
+                  "post-install",
+                  "pre-delete",
+                  "post-delete",
+                  "pre-upgrade",
+                  "post-upgrade",
+                  "pre-rollback",
+                  "post-rollback",
+                  "test"
+                ]
+              }
+            },
+            "weight": {
+              "type": "integer",
+              "description": "Helm hook weight for execution order",
+              "default": -5
+            },
+            "deletePolicies": {
+              "type": "array",
+              "description": "Helm hook delete policies",
+              "default": ["hook-succeeded", "before-hook-creation"],
+              "items": {
+                "type": "string",
+                "enum": [
+                  "before-hook-creation",
+                  "hook-succeeded",
+                  "hook-failed"
+                ]
+              }
+            }
+          }
+        },
         "egress": {
           "type": "object",
           "description": "Egress network policy configuration",
@@ -724,6 +772,49 @@
           }
         }
       }
+    },
+    "selfTest": {
+      "type": "object",
+      "description": "Self-test configuration for template validation and testing",
+      "patternProperties": {
+        "^[\\w.-]+$": {
+          "anyOf": [
+            {
+              "description": "Simple test configuration with direct arguments",
+              "anyOf": [
+                { "type": "array" },
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "object" }
+              ]
+            },
+            {
+              "type": "object",
+              "description": "Advanced test configuration with options",
+              "properties": {
+                "args": {
+                  "description": "Arguments to pass to the template function",
+                  "anyOf": [
+                    { "type": "array" },
+                    { "type": "string" },
+                    { "type": "number" },
+                    { "type": "boolean" },
+                    { "type": "object" }
+                  ]
+                },
+                "resultIsYaml": {
+                  "type": "boolean",
+                  "description": "Whether the template result should be parsed as YAML (default: false)",
+                  "default": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

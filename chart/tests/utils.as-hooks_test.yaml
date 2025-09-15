@@ -1,0 +1,240 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: bb-common.utils.as-hooks
+templates:
+  - templates/utils/self-test.yaml
+tests:
+  - it: must convert single resource to hook with basic configuration
+    set:
+      selfTest:
+        "bb-common.utils.as-hooks":
+          resultIsYaml: true
+          args:
+            - - apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: test-policy
+                  labels:
+                    app: test
+                spec:
+                  podSelector: {}
+            - - pre-install
+              - pre-upgrade
+            - -5
+            - - hook-succeeded
+              - before-hook-creation
+    asserts:
+      - equal:
+          path: result[0].metadata.name
+          value: test-policy-as-hook
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-weight"]
+          value: "-5"
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded,before-hook-creation
+      - equal:
+          path: result[0].metadata.labels.app
+          value: test
+      - equal:
+          path: result[0].spec.podSelector
+          value: {}
+
+  - it: must convert multiple resources to hooks
+    set:
+      selfTest:
+        "bb-common.utils.as-hooks":
+          resultIsYaml: true
+          args:
+            - - apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: policy-one
+                spec:
+                  podSelector:
+                    matchLabels:
+                      app: one
+              - apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: policy-two
+                spec:
+                  podSelector:
+                    matchLabels:
+                      app: two
+            - - post-install
+            - 10
+            - - hook-failed
+    asserts:
+      - equal:
+          path: result[0].metadata.name
+          value: policy-one-as-hook
+      - equal:
+          path: result[1].metadata.name
+          value: policy-two-as-hook
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook"]
+          value: post-install
+      - equal:
+          path: result[1].metadata.annotations["helm.sh/hook"]
+          value: post-install
+      - equal:
+          path: result[0].spec.podSelector.matchLabels.app
+          value: one
+      - equal:
+          path: result[1].spec.podSelector.matchLabels.app
+          value: two
+
+  - it: must handle single hook type and delete policy
+    set:
+      selfTest:
+        "bb-common.utils.as-hooks":
+          resultIsYaml: true
+          args:
+            - - apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: single-hook-policy
+                spec:
+                  podSelector: {}
+            - - pre-delete
+            - 0
+            - - hook-succeeded
+    asserts:
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook"]
+          value: pre-delete
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-weight"]
+          value: "0"
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded
+
+  - it: must preserve existing metadata and merge with hook annotations
+    set:
+      selfTest:
+        "bb-common.utils.as-hooks":
+          resultIsYaml: true
+          args:
+            - - apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: existing-metadata-policy
+                  labels:
+                    app: myapp
+                    version: v1.0.0
+                  annotations:
+                    description: "Original policy"
+                    custom.annotation: "value"
+                spec:
+                  podSelector:
+                    matchLabels:
+                      app: myapp
+            - - pre-install
+            - 5
+            - - hook-succeeded
+    asserts:
+      - equal:
+          path: result[0].metadata.name
+          value: existing-metadata-policy-as-hook
+      - equal:
+          path: result[0].metadata.labels.app
+          value: myapp
+      - equal:
+          path: result[0].metadata.labels.version
+          value: v1.0.0
+      - equal:
+          path: result[0].metadata.annotations.description
+          value: "Original policy"
+      - equal:
+          path: result[0].metadata.annotations["custom.annotation"]
+          value: "value"
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook"]
+          value: pre-install
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-weight"]
+          value: "5"
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded
+
+  - it: must handle multiple hook types and delete policies
+    set:
+      selfTest:
+        "bb-common.utils.as-hooks":
+          resultIsYaml: true
+          args:
+            - - apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: multi-hook-policy
+                spec:
+                  podSelector: {}
+            - - pre-install
+              - pre-upgrade
+              - post-delete
+            - -10
+            - - hook-succeeded
+              - hook-failed
+              - before-hook-creation
+    asserts:
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade,post-delete
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-weight"]
+          value: "-10"
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook-delete-policy"]
+          value: hook-succeeded,hook-failed,before-hook-creation
+
+  - it: must work with different resource types
+    set:
+      selfTest:
+        "bb-common.utils.as-hooks":
+          resultIsYaml: true
+          args:
+            - - apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: test-configmap
+                data:
+                  key: value
+              - apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: test-secret
+                data:
+                  password: c2VjcmV0
+            - - pre-install
+            - -1
+            - - hook-succeeded
+    asserts:
+      - equal:
+          path: result[0].kind
+          value: ConfigMap
+      - equal:
+          path: result[1].kind
+          value: Secret
+      - equal:
+          path: result[0].metadata.name
+          value: test-configmap-as-hook
+      - equal:
+          path: result[1].metadata.name
+          value: test-secret-as-hook
+      - equal:
+          path: result[0].data.key
+          value: value
+      - equal:
+          path: result[1].data.password
+          value: c2VjcmV0
+      - equal:
+          path: result[0].metadata.annotations["helm.sh/hook"]
+          value: pre-install
+      - equal:
+          path: result[1].metadata.annotations["helm.sh/hook"]
+          value: pre-install
