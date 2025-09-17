@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.7.1] - 2025-09-15
+
+### Changed
+
+- Fixed the behavior of egress netpols when more than one policy is specified under the same wildcard (`"*"`) local key
+
 ## [0.7.0] - 2025-09-10
 
 ### Added

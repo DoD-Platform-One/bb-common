@@ -7,95 +7,40 @@
     {{- $egressPolicies = tpl ($egressPolicies | toYaml) $ctx | fromYaml }}
   {{- end }}
 
+  {{- $generators := dict 
+    "k8s" "bb-common.network-policies.egress.generate.from-k8s-shorthand"
+    "cidr" "bb-common.network-policies.egress.generate.from-cidr-shorthand"
+    "definition" "bb-common.network-policies.egress.generate.from-definition"
+    "literal" "bb-common.network-policies.egress.generate.from-spec-literal"
+  }}
+
   {{- range $localKey, $localConfig := $egressPolicies }}
-    {{- $local := $localKey }}
+    {{- $localName := $localKey }}
 
-    {{- /* Process k8s rules */}}
-    {{- range $remoteKey, $remoteConfig := dig "to" "k8s" dict $localConfig }}
-      {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" false $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
-      {{- if not $isEnabled }}
-        {{- continue }}
-      {{- end }}
-
-      {{- $netpol := include "bb-common.network-policies.new" (list $local $localConfig.podSelector "egress") | fromYaml }}
-      {{- if eq $local "*" }}
-        {{- $local = "any-pod" }}
-      {{- end }}
-      {{- $name := printf "allow-egress-from-%s" $local }}
-      {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
-      {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
-      {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
-
-      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
-      {{- $netpol = include "bb-common.network-policies.egress.generate.from-k8s-shorthand" $args | fromYaml }}
-      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
-      {{- $netpols = append $netpols $netpol }}
+    {{- if eq $localName "*" }}
+      {{- $localName = "any-pod" }}
     {{- end }}
 
-    {{- /* Process cidr rules */}}
-    {{- range $remoteKey, $remoteConfig := dig "to" "cidr" dict $localConfig }}
-      {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" false $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
-      {{- if not $isEnabled }}
-        {{- continue }}
+    {{- range $remoteType, $generator := $generators }}
+      {{- range $remoteKey, $remoteConfig := dig "to" $remoteType dict $localConfig }}
+        {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" true $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
+
+        {{- if not $isEnabled }}
+          {{- continue }}
+        {{- end }}
+
+        {{- $netpol := include "bb-common.network-policies.new" (list $localKey $localConfig.podSelector "egress") | fromYaml }}
+
+        {{- $name := printf "allow-egress-from-%s" $localName }}
+        {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
+        {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
+        {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
+
+        {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations }}
+        {{- $netpol = include $generator $args | fromYaml }}
+        {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
+        {{- $netpols = append $netpols $netpol }}
       {{- end }}
-
-      {{- $netpol := include "bb-common.network-policies.new" (list $local $localConfig.podSelector "egress") | fromYaml }}
-      {{- if eq $local "*" }}
-        {{- $local = "any-pod" }}
-      {{- end }}
-      {{- $name := printf "allow-egress-from-%s" $local }}
-      {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
-      {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
-      {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
-
-      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
-      {{- $netpol = include "bb-common.network-policies.egress.generate.from-cidr-shorthand" $args | fromYaml }}
-      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
-      {{- $netpols = append $netpols $netpol }}
-    {{- end }}
-
-    {{- /* Process definition rules */}}
-    {{- range $remoteKey, $remoteConfig := dig "to" "definition" dict $localConfig }}
-      {{- $isEnabled := or (and (kindIs "map" $remoteConfig) (dig "enabled" false $remoteConfig)) (and (kindIs "bool" $remoteConfig) $remoteConfig) }}
-      {{- if not $isEnabled }}
-        {{- continue }}
-      {{- end }}
-
-      {{- $netpol := include "bb-common.network-policies.new" (list $local $localConfig.podSelector "egress") | fromYaml }}
-      {{- if eq $local "*" }}
-        {{- $local = "any-pod" }}
-      {{- end }}
-      {{- $name := printf "allow-egress-from-%s" $local }}
-      {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
-      {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
-      {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
-
-      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
-      {{- $netpol = include "bb-common.network-policies.egress.generate.from-definition" $args | fromYaml }}
-      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
-      {{- $netpols = append $netpols $netpol }}
-    {{- end }}
-
-    {{- /* Process literal rules */}}
-    {{- range $remoteKey, $remoteConfig := dig "to" "literal" dict $localConfig }}
-      {{- $isEnabled := dig "enabled" false $remoteConfig }}
-      {{- if not $isEnabled }}
-        {{- continue }}
-      {{- end }}
-
-      {{- $netpol := include "bb-common.network-policies.new" (list $local $localConfig.podSelector "egress") | fromYaml }}
-      {{- if eq $local "*" }}
-        {{- $local = "any-pod" }}
-      {{- end }}
-      {{- $name := printf "allow-egress-from-%s" $local }}
-      {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
-      {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
-      {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
-
-      {{- $args := list $ctx $netpol $remoteKey $remoteConfig $name $labels $annotations $local }}
-      {{- $netpol = include "bb-common.network-policies.egress.generate.from-spec-literal" $args | fromYaml }}
-      {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
-      {{- $netpols = append $netpols $netpol }}
     {{- end }}
   {{- end }}
 
