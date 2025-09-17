@@ -459,3 +459,41 @@ tests:
       - equal:
           path: spec.egress[0].to[0].podSelector
           value: {}
+  
+  - it: must create the proper podSelector with multiple policies on the same wildcard local key
+    set:
+      networkPolicies.egress.from:
+        "*":
+          to:
+            k8s:
+              backend/api: true
+              another-backend/api: true
+              yet-another-backend/api: true
+            cidr:
+              0.0.0.0/0: true
+              192.168.0.0/16: true
+    asserts:
+      - documentSelector:
+          path: metadata.name
+          value: allow-egress-from-any-pod-to-ns-backend-pod-api-any-port
+        equal:
+          path: spec.podSelector
+          value: {}
+      - documentSelector:
+          path: metadata.name
+          value: allow-egress-from-any-pod-to-ns-another-backend-pod-api-any-port
+        equal:
+          path: spec.podSelector
+          value: {}
+      - documentSelector:
+          path: metadata.name
+          value: allow-egress-from-any-pod-to-ns-yet-another-backend-pod-api-any-port
+        equal:
+          path: spec.podSelector
+          value: {}
+      - documentSelector:
+          path: metadata.name
+          value: allow-egress-from-any-pod-to-cidr-192-168-0-0-16-any-port
+        equal:
+          path: spec.podSelector
+          value: {}

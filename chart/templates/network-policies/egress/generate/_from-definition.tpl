@@ -6,7 +6,6 @@
   {{- $name := index . 4 }}
   {{- $labels := index . 5 }}
   {{- $annotations := index . 6 }}
-  {{- $local := index . 7 }}
 
   {{- $remote := include "bb-common.network-policies.egress.parse.definition-remote-key" $remoteKey | fromYaml }}
   {{- $_ := set $annotations "generated.network-policies.bigbang.dev/remote-key" $remoteKey }}
