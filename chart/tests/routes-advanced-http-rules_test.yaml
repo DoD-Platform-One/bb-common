@@ -1,0 +1,81 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Advanced HTTP Rules
+templates:
+  - templates/routes/render.yaml
+values:
+  - ./values/routes-advanced-http-rules.yaml
+tests:
+  - it: should create a VirtualService with custom HTTP rules
+    documentSelector:
+      path: metadata.name
+      value: api-routing
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: api.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/public-ingressgateway
+      
+      # Test v1 route
+      - equal:
+          path: spec.http[0].match[0].uri.prefix
+          value: /v1/
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: api-v1-service
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 8080
+      
+      # Test default route
+      - equal:
+          path: spec.http[1].route[0].destination.host
+          value: api-service
+      - equal:
+          path: spec.http[1].route[0].destination.port.number
+          value: 8080
+
+  - it: should create a ServiceEntry for api-routing
+    documentSelector:
+      path: metadata.name
+      value: api-routing-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: spec.hosts[0]
+          value: api.company.com
+      - equal:
+          path: spec.location
+          value: MESH_EXTERNAL
+
+  - it: should create a NetworkPolicy for api-routing
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-api-routing-any-port-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: api
+
+  - it: should create an AuthorizationPolicy for api-routing
+    documentSelector:
+      path: metadata.name
+      value: api-routing-public-ingressgateway-authz-policy
+    asserts:
+      - equal:
+          path: kind
+          value: AuthorizationPolicy
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: api

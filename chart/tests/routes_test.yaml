@@ -1,0 +1,81 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes Tests for Istio Ingress Gateway
+templates:
+  - templates/routes/render.yaml
+set:
+  render: true
+values:
+  - ./values/routes.yaml
+tests:
+  - it: should create an a VirtualService with a templated service name
+    documentSelector:
+      path: metadata.name
+      value: prometheus
+    asserts:
+      - equal:
+          path: spec.hosts[0]
+          value: prometheus.bigbang.mil
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/public-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: foo-prometheus
+  - it: should create an a NetworkPolicy for the ingress gateway
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-prometheus-3000-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: spec.ingress[0].from[0].podSelector.matchLabels
+          value:
+            app: public-ingressgateway
+            istio: ingressgateway
+      - equal:
+          path: spec.ingress[0].from[0].namespaceSelector.matchLabels
+          value:
+            app.kubernetes.io/name: istio-gateway
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: prometheus
+  - it: should create an an AuthorizationPolicy for the ingress gateway
+    documentSelector:
+      path: metadata.name
+      value: prometheus-public-ingressgateway-authz-policy
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: prometheus
+      - equal:
+          path: spec.rules[0].from[0].source.namespaces
+          value:
+            - istio-gateway
+      - equal:
+          path: spec.rules[0].from[0].source.principals
+          value:
+            - cluster.local/ns/istio-gateway/sa/public-ingressgateway-ingressgateway-service-account
+  - it: should create a ServiceEntry for external hosts
+    documentSelector:
+      path: metadata.name
+      value: prometheus-service-entry
+    asserts:
+      - equal:
+          path: spec.hosts[0]
+          value: prometheus.bigbang.mil
+      - equal:
+          path: spec.location
+          value: MESH_EXTERNAL
+      - equal:
+          path: spec.resolution
+          value: DNS
+      - equal:
+          path: spec.ports[0].name
+          value: https
+      - equal:
+          path: spec.ports[0].number
+          value: 443
+      - equal:
+          path: spec.ports[0].protocol
+          value: HTTPS

@@ -1,0 +1,113 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Custom Gateway Configuration
+templates:
+  - templates/routes/render.yaml
+values:
+  - ./values/routes-custom-gateway-configuration.yaml
+tests:
+  # Public API tests
+  - it: should create a VirtualService for public-api
+    documentSelector:
+      path: metadata.name
+      value: public-api
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: api.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/public-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: public-api
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 443
+
+  - it: should create a NetworkPolicy for public-api with inferred selector
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-public-api-443-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: public-api
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 443
+
+  - it: should create a ServiceEntry for public-api without custom labels
+    documentSelector:
+      path: metadata.name
+      value: public-api-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: spec.hosts[0]
+          value: api.company.com
+      - notExists:
+          path: metadata.labels.exposure
+      - notExists:
+          path: metadata.annotations.monitoring
+
+  # Internal dashboard tests
+  - it: should create a VirtualService for internal-dashboard
+    documentSelector:
+      path: metadata.name
+      value: internal-dashboard
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: dashboard.internal.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/internal-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: dashboard
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 8080
+
+  - it: should create a NetworkPolicy for internal-dashboard
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-internal-dashboard-8080-from-ns-istio-gateway-pod-internal-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: dashboard
+            tier: management
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8080
+
+  - it: should create an AuthorizationPolicy for internal-dashboard
+    documentSelector:
+      path: metadata.name
+      value: internal-dashboard-internal-ingressgateway-authz-policy
+    asserts:
+      - equal:
+          path: kind
+          value: AuthorizationPolicy
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: dashboard
+            tier: management

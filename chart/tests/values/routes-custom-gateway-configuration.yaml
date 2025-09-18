@@ -1,0 +1,24 @@
+routes:
+  inbound:
+    # External public service
+    public-api:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - api.company.com
+      service: public-api
+      port: 443
+
+    # Internal service
+    internal-dashboard:
+      enabled: true
+      gateways:
+        - istio-gateway/internal-ingressgateway
+      hosts:
+        - dashboard.internal.company.com
+      service: dashboard
+      port: 8080
+      selector:
+        app.kubernetes.io/name: dashboard
+        tier: management
