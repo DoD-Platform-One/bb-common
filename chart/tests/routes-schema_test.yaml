@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Simple Application Routing
+templates:
+  - templates/routes/render.yaml
+values:
+  - ./values/routes-simple-application-routing.yaml
+tests:
+  - it: should fail templating
+    set:
+      routes:
+        test-route: {}
+    asserts:
+      - failedTemplate: {}
+  - it: should fail templating contains an extra key (foo)
+    set:
+      routes:
+        test-route:
+          enabled: true
+          gateways:
+            - istio-gateway/public-ingressgateway
+          hosts:
+            - test.bar.com
+          service: foo.bar.svc.cluster.local
+          port: 3000
+          foo: "default"
+          selector:
+            app.kubernetes.io/name: test
+    asserts:
+      - failedTemplate: {}
+  - it: should fail templating is missing a port
+    set:
+      routes:
+        prometheus:
+          enabled: true
+          annotations: {}
+          labels: {}
+          gateways:
+            - istio-gateway/public-ingressgateway
+          hosts:
+            - prometheus.{{ .Values.domain }}
+          service: '{{ printf "%s-%s" .Values.test "prometheus"}}'
+          # strictly used for netpol
+          selector:
+            app.kubernetes.io/name: prometheus
+    asserts:
+      - failedTemplate: {}
+

@@ -1,0 +1,15 @@
+test: "foo"
+domain: "bigbang.mil"
+routes:
+  inbound:
+    prometheus:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - prometheus.{{ .Values.domain }}
+      service: '{{ printf "%s-%s" .Values.test "prometheus"}}'
+      port: 3000
+      # strictly used for netpol
+      selector:
+        app.kubernetes.io/name: prometheus

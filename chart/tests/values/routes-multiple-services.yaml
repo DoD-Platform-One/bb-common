@@ -1,0 +1,38 @@
+domain: company.com
+
+routes:
+  inbound:
+    # Frontend application
+    frontend:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - app.company.com
+      service: frontend-service
+      port: 3000
+      selector:
+        app.kubernetes.io/name: frontend
+
+    # API service with templated values
+    api:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - api.{{ .Values.domain }}
+      service: '{{ printf "%s-%s" .Release.Name "api" }}'
+      port: 8080
+      selector:
+        app.kubernetes.io/name: api
+        version: v1
+
+    # Admin interface (no NetworkPolicy generation)
+    admin:
+      enabled: true
+      gateways:
+        - istio-gateway/internal-ingressgateway
+      hosts:
+        - admin.internal.company.com
+      service: admin-service
+      port: 9090

@@ -1,0 +1,147 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Multiple Services
+templates:
+  - templates/routes/render.yaml
+values:
+  - ./values/routes-multiple-services.yaml
+tests:
+  # Frontend service tests
+  - it: should create a VirtualService for frontend
+    documentSelector:
+      path: metadata.name
+      value: frontend
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: app.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/public-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: frontend-service
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 3000
+
+  - it: should create a NetworkPolicy for frontend
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-frontend-3000-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: frontend
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 3000
+
+  # API service tests
+  - it: should create a VirtualService for api with templated values
+    documentSelector:
+      path: metadata.name
+      value: api
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: api.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/public-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: RELEASE-NAME-api
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 8080
+
+  - it: should create a NetworkPolicy for api
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-api-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: api
+            version: v1
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8080
+
+  # Admin service tests
+  - it: should create a VirtualService for admin (no NetworkPolicy)
+    documentSelector:
+      path: metadata.name
+      value: admin
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: admin.internal.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/internal-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: admin-service
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 9090
+
+  # ServiceEntry tests
+  - it: should create ServiceEntries for all routes
+    asserts:
+      - hasDocuments:
+          count: 12  # frontend(4) + api(4) + admin(4) = 10
+
+  - it: should create a ServiceEntry for frontend
+    documentSelector:
+      path: metadata.name
+      value: frontend-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: spec.hosts[0]
+          value: app.company.com
+
+  - it: should create a ServiceEntry for api
+    documentSelector:
+      path: metadata.name
+      value: api-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: spec.hosts[0]
+          value: api.company.com
+
+  - it: should create a ServiceEntry for admin
+    documentSelector:
+      path: metadata.name
+      value: admin-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: spec.hosts[0]
+          value: admin.internal.company.com

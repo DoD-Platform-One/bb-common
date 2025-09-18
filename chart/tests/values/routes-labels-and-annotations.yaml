@@ -1,0 +1,21 @@
+routes:
+  inbound:
+    labeled-app:
+      enabled: true
+      metadata:
+        labels:
+          team: platform
+          environment: production
+          version: v1.0.0
+        annotations:
+          description: "Main application routing"
+          contact: "platform-team@company.com"
+          documentation: "https://docs.company.com/my-app"
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - myapp.example.com
+      service: my-app
+      port: 8080
+      selector:
+        app.kubernetes.io/name: my-app

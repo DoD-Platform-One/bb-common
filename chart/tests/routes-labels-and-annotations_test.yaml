@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Labels and Annotations
+templates:
+  - templates/routes/render.yaml
+values:
+  - ./values/routes-labels-and-annotations.yaml
+tests:
+  - it: should create a VirtualService with custom labels and annotations
+    documentSelector:
+      path: metadata.name
+      value: labeled-app
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.environment
+          value: production
+      - equal:
+          path: metadata.labels.version
+          value: v1.0.0
+      - equal:
+          path: metadata.annotations.description
+          value: "Main application routing"
+      - equal:
+          path: metadata.annotations.contact
+          value: "platform-team@company.com"
+      - equal:
+          path: metadata.annotations.documentation
+          value: "https://docs.company.com/my-app"
+
+  - it: should create a ServiceEntry with custom labels and annotations
+    documentSelector:
+      path: metadata.name
+      value: labeled-app-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.environment
+          value: production
+      - equal:
+          path: metadata.labels.version
+          value: v1.0.0
+      - equal:
+          path: metadata.annotations.description
+          value: "Main application routing"
+      - equal:
+          path: metadata.annotations.contact
+          value: "platform-team@company.com"
+      - equal:
+          path: metadata.annotations.documentation
+          value: "https://docs.company.com/my-app"
+
+  - it: should create a NetworkPolicy with custom labels and annotations
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-labeled-app-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: my-app
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.environment
+          value: production
+      - equal:
+          path: metadata.labels.version
+          value: v1.0.0
+      - equal:
+          path: metadata.annotations.description
+          value: "Main application routing"
+      - equal:
+          path: metadata.annotations.contact
+          value: "platform-team@company.com"
+      - equal:
+          path: metadata.annotations.documentation
+          value: "https://docs.company.com/my-app"
+
+  - it: should create an AuthorizationPolicy with custom labels and annotations
+    documentSelector:
+      path: metadata.name
+      value: labeled-app-public-ingressgateway-authz-policy
+    asserts:
+      - equal:
+          path: kind
+          value: AuthorizationPolicy
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: my-app
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.environment
+          value: production
+      - equal:
+          path: metadata.labels.version
+          value: v1.0.0
+      - equal:
+          path: metadata.annotations.description
+          value: "Main application routing"
+      - equal:
+          path: metadata.annotations.contact
+          value: "platform-team@company.com"
+      - equal:
+          path: metadata.annotations.documentation
+          value: "https://docs.company.com/my-app"

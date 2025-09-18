@@ -1,0 +1,100 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Simple Application Routing
+templates:
+  - templates/routes/render.yaml
+values:
+  - ./values/routes-simple-application-routing.yaml
+tests:
+  - it: should create a VirtualService for webapp
+    documentSelector:
+      path: metadata.name
+      value: webapp
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.hosts[0]
+          value: webapp.company.com
+      - equal:
+          path: spec.gateways[0]
+          value: istio-gateway/public-ingressgateway
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: webapp
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 8080
+
+  - it: should create a ServiceEntry for webapp
+    documentSelector:
+      path: metadata.name
+      value: webapp-service-entry
+    asserts:
+      - equal:
+          path: kind
+          value: ServiceEntry
+      - equal:
+          path: spec.hosts[0]
+          value: webapp.company.com
+      - equal:
+          path: spec.location
+          value: MESH_EXTERNAL
+      - equal:
+          path: spec.resolution
+          value: DNS
+      - equal:
+          path: spec.ports[0].name
+          value: https
+      - equal:
+          path: spec.ports[0].number
+          value: 443
+      - equal:
+          path: spec.ports[0].protocol
+          value: HTTPS
+
+  - it: should create a NetworkPolicy for webapp
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-webapp-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: webapp
+      - equal:
+          path: spec.ingress[0].from[0].namespaceSelector.matchLabels
+          value:
+            app.kubernetes.io/name: istio-gateway
+      - equal:
+          path: spec.ingress[0].from[0].podSelector.matchLabels
+          value:
+            app: public-ingressgateway
+            istio: ingressgateway
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8080
+
+  - it: should create an AuthorizationPolicy for webapp
+    documentSelector:
+      path: metadata.name
+      value: webapp-public-ingressgateway-authz-policy
+    asserts:
+      - equal:
+          path: kind
+          value: AuthorizationPolicy
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: webapp
+      - equal:
+          path: spec.rules[0].from[0].source.namespaces
+          value:
+            - istio-gateway
+      - equal:
+          path: spec.rules[0].from[0].source.principals
+          value:
+            - cluster.local/ns/istio-gateway/sa/public-ingressgateway-ingressgateway-service-account

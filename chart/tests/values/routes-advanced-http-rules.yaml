@@ -1,0 +1,28 @@
+routes:
+  inbound:
+    api-routing:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - api.company.com
+      # Custom HTTP routing instead of simple service/port
+      http:
+        # Route /v1/* to version 1 service
+        - match:
+            - uri:
+                prefix: /v1/
+          route:
+            - destination:
+                host: api-v1-service
+                port:
+                  number: 8080
+
+        # Default route for everything else
+        - route:
+            - destination:
+                host: api-service
+                port:
+                  number: 8080
+      selector:
+        app.kubernetes.io/name: api

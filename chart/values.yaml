@@ -176,3 +176,24 @@ networkPolicies:
   #         - to:
   #             - ipBlock:
   #                 cidr: 192.168.0.0/16
+
+# Routes Configuration
+# # Istio VirtualService and gateway configuration for routing traffic to applications
+# routes:
+#   # Inbound routes configuration
+#   inbound:
+#     # Simple web application routing
+#     my-app:
+#       enabled: true                    # Enable/disable this route
+#       gateways:                        # List of Istio gateways
+#         - istio-gateway/public-ingressgateway
+#       hosts:                           # List of host domains (supports templating)
+#         - myapp.example.com
+#         - myapp.{{ .Values.domain }}   # Templated hostname
+#       service: my-app-service          # Target service name (supports templating)
+#       port: 8080                       # Target service port (supports templating)
+#       selector:                        # Optional - defaults to app.kubernetes.io/name: {route-key}
+#         app.kubernetes.io/name: my-app
+#       metadata:                        # Custom metadata for all generated resources
+#         labels: {}
+#         annotations: {}
