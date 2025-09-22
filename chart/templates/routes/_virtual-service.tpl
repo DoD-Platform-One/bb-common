@@ -9,7 +9,7 @@
 
   {{- /* Build VirtualService resource */}}
   {{- $vs := dict }}
-  {{- $_ := set $vs "apiVersion" "networking.istio.io/v1beta1" }}
+  {{- $_ := set $vs "apiVersion" "networking.istio.io/v1" }}
   {{- $_ := set $vs "kind" "VirtualService" }}
 
   {{- $metadata := dict "name" (printf "%s" $name) "namespace" $ctx.Release.Namespace }}

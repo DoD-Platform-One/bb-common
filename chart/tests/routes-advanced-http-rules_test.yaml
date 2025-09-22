@@ -4,6 +4,9 @@ templates:
   - templates/routes/render.yaml
 values:
   - ./values/routes-advanced-http-rules.yaml
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
 tests:
   - it: should create a VirtualService with custom HTTP rules
     documentSelector:
