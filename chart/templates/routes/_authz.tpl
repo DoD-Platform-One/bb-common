@@ -9,7 +9,7 @@
 
   {{- /* Build AuthorizationPolicy resource */}}
   {{- $authz := dict }}
-  {{- $_ := set $authz "apiVersion" "security.istio.io/v1beta1" }}
+  {{- $_ := set $authz "apiVersion" "security.istio.io/v1" }}
   {{- $_ := set $authz "kind" "AuthorizationPolicy" }}
 
   {{- $metadata := dict "name" (printf "%s-%s-authz-policy" $name $istioGateway) "namespace" $ctx.Release.Namespace }}

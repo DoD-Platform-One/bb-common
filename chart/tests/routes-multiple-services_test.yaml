@@ -4,6 +4,9 @@ templates:
   - templates/routes/render.yaml
 values:
   - ./values/routes-multiple-services.yaml
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
 tests:
   # Frontend service tests
   - it: should create a VirtualService for frontend

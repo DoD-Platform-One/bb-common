@@ -1,8 +1,9 @@
 {{- define "bb-common.routes.render" }}
   {{- $ctx := . }}
   {{- $resources := list }}
+  {{- $istioAvailable := $ctx.Capabilities.APIVersions.Has "networking.istio.io/v1" }}
 
-  {{- if and $ctx.Values.routes $ctx.Values.routes.inbound }}
+  {{- if and $istioAvailable $ctx.Values.routes $ctx.Values.routes.inbound }}
     {{- range $name, $route := $ctx.Values.routes.inbound }}
       {{- if $route.enabled }}
 

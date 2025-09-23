@@ -6,6 +6,9 @@ set:
   render: true
 values:
   - ./values/routes.yaml
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
 tests:
   - it: should create an a VirtualService with a templated service name
     documentSelector:
