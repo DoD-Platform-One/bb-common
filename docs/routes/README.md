@@ -149,10 +149,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              app.kubernetes.io/name: istio-gateway
+              kubernetes.io/metadata.name: istio-gateway
           podSelector:
             matchLabels:
-              app: public-ingressgateway
+              app.kubernetes.io/name: public-ingressgateway
               istio: ingressgateway
       ports:
         - port: 8080
