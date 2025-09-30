@@ -33,8 +33,8 @@
   {{- $_ := set $spec "policyTypes" (list "Ingress") }}
 
   {{- $ingress := dict }}
-  {{- $namespaceSelector := dict "matchLabels" (dict "app.kubernetes.io/name" $istioNamespace) }}
-  {{- $podSelector := dict "matchLabels" (dict "app" $istioGateway "istio" "ingressgateway") }}
+  {{- $namespaceSelector := dict "matchLabels" (dict "kubernetes.io/metadata.name" $istioNamespace) }}
+  {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/name" $istioGateway "istio" "ingressgateway") }}
   {{- $from := dict "namespaceSelector" $namespaceSelector "podSelector" $podSelector }}
   {{- $_ := set $ingress "from" (list $from) }}
   {{- if $route.port }}

@@ -4,6 +4,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.8.2] - 2025-09-30
+
+### Changed
+
+- Updated routes NetworkPolicy selectors to use `kubernetes.io/metadata.name` for namespace selector and `app.kubernetes.io/name` for pod selector to align with Kubernetes standards
+
 ## [0.8.1] - 2025-09-15
 
 ### Added

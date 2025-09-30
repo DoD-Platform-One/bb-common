@@ -71,11 +71,11 @@ tests:
       - equal:
           path: spec.ingress[0].from[0].namespaceSelector.matchLabels
           value:
-            app.kubernetes.io/name: istio-gateway
+            kubernetes.io/metadata.name: istio-gateway
       - equal:
           path: spec.ingress[0].from[0].podSelector.matchLabels
           value:
-            app: public-ingressgateway
+            app.kubernetes.io/name: public-ingressgateway
             istio: ingressgateway
       - equal:
           path: spec.ingress[0].ports[0].port
