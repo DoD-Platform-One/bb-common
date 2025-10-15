@@ -37,11 +37,11 @@ merge_property() {
   local bb_common_schema="$2"
   local property_name="$3"
 
-  yq eval-all '
+  yq eval-all "
     select(fileIndex == 0) as \$current |
     select(fileIndex == 1) as \$bb |
     \$current | .properties.${property_name} = \$bb.properties.${property_name}
-  ' "${working_schema}" "${bb_common_schema}" -i "${working_schema}"
+  " "${working_schema}" "${bb_common_schema}" -i "${working_schema}"
 }
 
 # Locate chart directory
