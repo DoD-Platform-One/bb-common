@@ -33,6 +33,33 @@ teardown() {
     cd "${TEST_DIR}"
     git clone --branch "${BRANCH}" "${TEST_REPO}" kiali
 
+    # Get the bb-common version that will be used by the script
+    bb_common_version=$(yq e '.dependencies[] | select(.name == "bb-common") | .version' kiali/chart/Chart.lock)
+
+    # Download bb-common schema for comparison
+    curl -s -f "https://repo1.dso.mil/big-bang/product/packages/bb-common/-/raw/${bb_common_version}/chart/values.schema.json" > "${TEST_DIR}/bb-common-schema.json"
+
+    # Replace kiali's values.schema.json with a minimal schema without routes or networkPolicies
+    # This ensures the test validates that schema.sh actually adds these properties
+    cat > kiali/chart/values.schema.json << 'EOF'
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string"
+    }
+  }
+}
+EOF
+
+    # Verify initial state lacks routes and networkPolicies
+    run yq e '.properties.routes' kiali/chart/values.schema.json
+    [[ "$output" == "null" ]]
+
+    run yq e '.properties.networkPolicies' kiali/chart/values.schema.json
+    [[ "$output" == "null" ]]
+
     # Run schema.sh script
     run "${SCRIPT_DIR}/schema.sh" kiali/chart
     [ "$status" -eq 0 ]
@@ -41,27 +68,18 @@ teardown() {
     run yq e '.' kiali/chart/values.schema.json
     [ "$status" -eq 0 ]
 
-    # Check if networkPolicies property exists in schema
-    run yq e '.properties.networkPolicies' kiali/chart/values.schema.json
-    [ "$status" -eq 0 ]
-
-    # Check if routes property exists in schema
-    run yq e '.properties.routes' kiali/chart/values.schema.json
-    [ "$status" -eq 0 ]
-
-    # Check if updated schema for routes is exactly the same as bb-common schema
-    # Get the bb-common version that was actually used by the script
-    bb_common_version=$(yq e '.dependencies[] | select(.name == "bb-common") | .version' kiali/chart/Chart.lock)
-
-    # Download the same version that the script used for comparison
-    curl -s -f "https://repo1.dso.mil/big-bang/product/packages/bb-common/-/raw/${bb_common_version}/chart/values.schema.json" > "${TEST_DIR}/bb-common-schema.json"
-
-    # Extract routes property from both schemas and compare
+    # Verify routes property was actually added with bb-common content
     yq e '.properties.routes' kiali/chart/values.schema.json > "${TEST_DIR}/kiali-routes.json"
     yq e '.properties.routes' "${TEST_DIR}/bb-common-schema.json" > "${TEST_DIR}/bb-common-routes.json"
 
-    # Compare the routes properties
     run diff "${TEST_DIR}/kiali-routes.json" "${TEST_DIR}/bb-common-routes.json"
+    [ "$status" -eq 0 ]
+
+    # Verify networkPolicies property was actually added with bb-common content
+    yq e '.properties.networkPolicies' kiali/chart/values.schema.json > "${TEST_DIR}/kiali-netpol.json"
+    yq e '.properties.networkPolicies' "${TEST_DIR}/bb-common-schema.json" > "${TEST_DIR}/bb-common-netpol.json"
+
+    run diff "${TEST_DIR}/kiali-netpol.json" "${TEST_DIR}/bb-common-netpol.json"
     [ "$status" -eq 0 ]
 
     # Check if $defs section exists

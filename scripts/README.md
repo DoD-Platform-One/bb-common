@@ -162,4 +162,4 @@ The tests validate:
 - Script functionality and error handling
 - Schema merging and validation
 - Subchart vs template mode detection
-- Integration with real charts (using kiali as test case)
+- Integration with real charts (using kiali with dummy schema as test case)
