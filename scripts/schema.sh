@@ -96,11 +96,11 @@ fi
 is_using_network_policies=false
 is_using_routes=false
 
-if grep -r -E 'bb-common\.network-policies\.render' . >/dev/null 2>&1; then
+if grep -r -E 'bb-common\.network-policies\.render' "$chart_dir" >/dev/null 2>&1; then
   is_using_network_policies=true
 fi
 
-if grep -r -E 'bb-common\.routes\.render' . >/dev/null 2>&1; then
+if grep -r -E 'bb-common\.routes\.render' "$chart_dir" >/dev/null 2>&1; then
   is_using_routes=true
 fi
 
