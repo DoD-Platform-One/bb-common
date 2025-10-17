@@ -33,7 +33,7 @@
         {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 
         {{- if $localConfig.podSelector }}
-          {{- $_ := set $annotations "generated.network-policies.bigbang.dev/with-local-selector-override" $localConfig.podSelector }}
+          {{- $_ := set $annotations "generated.network-policies.bigbang.dev/with-local-selector-override" ($localConfig.podSelector | toYaml) }}
         {{- end }}
 
         {{- if and $localParsed.protocol (not (eq $localParsed.protocol "TCP")) }}
