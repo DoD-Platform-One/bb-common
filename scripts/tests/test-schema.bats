@@ -68,7 +68,26 @@ EOF
     run yq e '.' kiali/chart/values.schema.json
     [ "$status" -eq 0 ]
 
-    # Verify routes property was actually added with bb-common content
+    # Check if networkPolicies property exists in schema
+    run yq e '.properties.networkPolicies' kiali/chart/values.schema.json
+    [ "$status" -eq 0 ]
+
+    # Check if routes property exists in schema
+    run yq e '.properties.routes' kiali/chart/values.schema.json
+    [ "$status" -eq 0 ]
+
+    # Check if routes property exists in schema
+    run yq e '.properties.istio' kiali/chart/values.schema.json
+    [ "$status" -eq 0 ]
+
+    # Check if updated schema for routes is exactly the same as bb-common schema
+    # Get the bb-common version that was actually used by the script
+    bb_common_version=$(yq e '.dependencies[] | select(.name == "bb-common") | .version' kiali/chart/Chart.lock)
+
+    # Download the same version that the script used for comparison
+    curl -s -f "https://repo1.dso.mil/big-bang/product/packages/bb-common/-/raw/${bb_common_version}/chart/values.schema.json" > "${TEST_DIR}/bb-common-schema.json"
+
+    # Extract routes property from both schemas and compare
     yq e '.properties.routes' kiali/chart/values.schema.json > "${TEST_DIR}/kiali-routes.json"
     yq e '.properties.routes' "${TEST_DIR}/bb-common-schema.json" > "${TEST_DIR}/bb-common-routes.json"
 

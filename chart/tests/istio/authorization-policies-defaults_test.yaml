@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Istio Authorization Policies Defaults Tests
+templates:
+  - templates/istio/render.yaml
+release:
+  name: test
+set:
+  istio:
+    enabled: true
+    authorizationPolicies:
+      enabled: true
+      generateFromNetpol: true
+  networkPolicies:
+    enabled: true
+    ingress:
+      defaults:
+        enabled: true
+    egress:
+      defaults:
+        enabled: false
+tests:
+  - it: must create default authorization policies when generateAuthorizationPolicies is enabled
+    asserts:
+      - hasDocuments:
+          count: 3
+      - documentSelector:
+          path: metadata.name
+          value: allow-nothing
+        equal:
+          path: kind
+          value: AuthorizationPolicy
+      - documentSelector:
+          path: metadata.name
+          value: allow-nothing
+        equal:
+          path: spec
+          value: {}
+      - documentSelector:
+          path: metadata.name
+          value: default-authz-allow-all-in-ns
+        equal:
+          path: kind
+          value: AuthorizationPolicy
+      - documentSelector:
+          path: metadata.name
+          value: default-authz-allow-all-in-ns
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      namespaces: ["NAMESPACE"]
+
+  - it: must create default authorization policies even when generateFromNetpol is disabled
+    set:
+      istio.authorizationPolicies.generateFromNetpol: false
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: must not create default authorization policy when defaults are disabled
+    set:
+      networkPolicies.ingress.defaults.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PeerAuthentication
+
+  - it: must not create default authorization policies when authorizationPolicies are disabled
+    set:
+      istio.authorizationPolicies.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PeerAuthentication
+
+  - it: must not create default authorization policies when authorizationPolicies.defaults.enabled is false
+    set:
+      istio.authorizationPolicies.defaults.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PeerAuthentication
+
+  - it: must create default authorization policies when authorizationPolicies.defaults.enabled is true
+    set:
+      istio.authorizationPolicies.defaults.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 3

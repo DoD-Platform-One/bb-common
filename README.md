@@ -36,6 +36,28 @@ declarative configurations:
 
 [Learn more about network policies →](docs/network-policies/README.md)
 
+### Istio Resources
+
+BB-Common provides templates for Istio service mesh resources including
+authorization policies, peer authentication.
+
+- **[Authorization Policies](docs/authorization-policies/README.md)**: Generate Istio AuthorizationPolicies automatically
+  from NetworkPolicy configurations or define custom policies
+- **Secure Default Policies**: Default Sidecar, PeerAuthentication, AuthorizationPolicy configuration
+  for enhanced security posture
+
+[Learn more about Istio resources →](docs/istio/README.md)
+
+### Routes
+
+Simplified configuration for Istio VirtualServices and traffic routing:
+
+- **Gateway Integration**: Easy configuration of ingress routes through Istio
+  gateways
+- **Traffic Management**: Declare routing rules with minimal boilerplate
+
+[Learn more about routes →](docs/routes/README.md)
+
 ## Installation
 
 ### As a Subchart
@@ -129,15 +151,11 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## Roadmap
 
-Future additions to bb-common will include:
-
-- **Authorization Policies**: Istio authorization templates
-- **Service Entries**: External service registration
-- **Peer Authentications**: mTLS configuration
-- **Virtual Services**: Traffic management rules
-
 The goal is to provide a comprehensive library that standardizes Big Bang
 integration while reducing boilerplate across all packages.
+
+Future additions to bb-common will include:
+- **Service Entries**: External service registration
 
 ## License
 

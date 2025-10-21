@@ -1,23 +1,25 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
-suite: Authorization Policies Tests
+suite: Istio Authorization Policies Tests
 templates:
   - templates/network-policies/render.yaml
 release:
   name: test
 set:
+  istio:
+    authorizationPolicies:
+      generateFromNetpol: true
   networkPolicies:
     enabled: true
     ingress:
       defaults:
         enabled: false
-      generateAuthorizationPolicies: true
     egress:
       defaults:
         enabled: false
 tests:
   - it: must not create authorization policies when disabled
     set:
-      networkPolicies.ingress.generateAuthorizationPolicies: false
+      istio.authorizationPolicies.generateFromNetpol: false
       networkPolicies.ingress.to.myapp.from.k8s.admin-sa@admin/dashboard: true
     asserts:
       - hasDocuments:
@@ -98,63 +100,36 @@ tests:
               matchLabels:
                 app.kubernetes.io/name: myapp
 
-  - it: must create multiple authorization policies for different identities
+  - it: must create authorization policy for k8s namespace without identity
     set:
-      networkPolicies.ingress.to.myapp:8081.from.k8s.admin-sa@admin/dashboard: true
-      networkPolicies.ingress.to.myapp:8080.from.k8s.user-sa@users/webapp: true
+      networkPolicies.ingress.to.myapp:8443.from.k8s.admin/dashboard: true
     asserts:
       - hasDocuments:
-          count: 4
-      - documentSelector:
-          path: metadata.name
-          value: allow-ingress-to-myapp-tcp-port-8081-from-ns-admin-pod-dashboard-with-identity-admin-sa
-        equal:
-          path: spec
-          value:
-            action: ALLOW
-            rules:
-              - from:
-                  - source:
-                      principals:
-                        - cluster.local/ns/admin/sa/admin-sa
-                to:
-                  - operation:
-                      ports:
-                        - "8081"
-            selector:
-              matchLabels:
-                app.kubernetes.io/name: myapp
-      - documentSelector:
-          path: metadata.name
-          value: allow-ingress-to-myapp-tcp-port-8080-from-ns-users-pod-webapp-with-identity-user-sa
-        equal:
-          path: spec
-          value:
-            action: ALLOW
-            rules:
-              - from:
-                  - source:
-                      principals:
-                        - cluster.local/ns/users/sa/user-sa
-                to:
-                  - operation:
-                      ports:
-                        - "8080"
-            selector:
-              matchLabels:
-                app.kubernetes.io/name: myapp
-
-  - it: must not create authorization policy for k8s without identity
-    set:
-      networkPolicies.ingress.to.myapp.from.k8s.admin/dashboard: true
-    asserts:
-      - hasDocuments:
-          count: 1
+          count: 2
       - documentSelector:
           path: kind
           value: NetworkPolicy
         isKind:
           of: NetworkPolicy
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      namespaces:
+                        - admin
+                to:
+                  - operation:
+                      ports:
+                        - "8443"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
 
   - it: must create authorization policy with selector override
     set:
@@ -189,4 +164,121 @@ tests:
               matchLabels:
                 app: myapp-specific
                 version: v2
+
+  - it: must create authorization policy from CIDR with specific port
+    set:
+      networkPolicies.ingress.to.myapp:8080.from.cidr:
+        192.168.1.0/24: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: kind
+          value: NetworkPolicy
+        isKind:
+          of: NetworkPolicy
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      ipBlocks:
+                        - 192.168.1.0/24
+                to:
+                  - operation:
+                      ports:
+                        - "8080"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create authorization policy from CIDR without port
+    set:
+      networkPolicies.ingress.to.myapp.from.cidr:
+        10.0.0.0/8: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      ipBlocks:
+                        - 10.0.0.0/8
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create authorization policy from anywhere (0.0.0.0/0)
+    set:
+      networkPolicies.ingress.to.myapp:3000.from.cidr:
+        0.0.0.0/0: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: metadata.name
+          value: allow-ingress-to-myapp-tcp-port-3000-from-anywhere
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      ipBlocks:
+                        - 0.0.0.0/0
+                to:
+                  - operation:
+                      ports:
+                        - "3000"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create authorization policy from CIDR with port range
+    set:
+      networkPolicies.ingress.to.myapp:9000-9002.from.cidr:
+        172.16.0.0/12: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: kind
+          value: AuthorizationPolicy
+        equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      ipBlocks:
+                        - 172.16.0.0/12
+                to:
+                  - operation:
+                      ports:
+                        - "9000"
+                        - "9001"
+                        - "9002"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
 

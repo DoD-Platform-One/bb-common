@@ -45,10 +45,16 @@
         {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
         {{- $netpols = append $netpols $netpol }}
 
-        {{- if and (eq $remoteType "k8s") (contains "@" $remoteKey) (dig "ingress" "generateAuthorizationPolicies" false $ctx.Values.networkPolicies) }}
-          {{- $authzPolicy := include "bb-common.authorization-policies.generate.from-network-policy" $args | fromYaml }}
-          {{- $authzPolicy := merge $authzPolicy (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
-          {{- $authzpols = append $authzpols $authzPolicy }}
+        {{- if dig "authorizationPolicies" "generateFromNetpol" false $ctx.Values.istio }}
+          {{- if eq $remoteType "k8s" }}
+            {{- $authzPolicy := include "bb-common.istio.authorization-policies.generate.from-k8s-network-policy" $args | fromYaml }}
+            {{- $authzPolicy := merge $authzPolicy (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
+            {{- $authzpols = append $authzpols $authzPolicy }}
+          {{- else if eq $remoteType "cidr" }}
+            {{- $authzPolicy := include "bb-common.istio.authorization-policies.generate.from-cidr-network-policy" $args | fromYaml }}
+            {{- $authzPolicy := merge $authzPolicy (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
+            {{- $authzpols = append $authzpols $authzPolicy }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}

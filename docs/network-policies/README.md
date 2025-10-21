@@ -149,12 +149,14 @@ networkPolicies:
 ```
 
 For ingress rules with identity-based authorization (requires
-`ingress.generateAuthorizationPolicies: true`):
+`istio.authorizationPolicies.generateFromNetpol: true`):
 
 ```yaml
+istio:
+  authorizationPolicies:
+    generateFromNetpol: true
 networkPolicies:
   ingress:
-    generateAuthorizationPolicies: true
     to:
       api:
         from:
@@ -1113,127 +1115,37 @@ networkPolicies:
                 protocol: TCP
 ```
 
-### SPIFFE-based AuthorizationPolicies
+### Authorization Policy Generation
 
-When using Istio service mesh, you can generate SPIFFE-based
-AuthorizationPolicies alongside NetworkPolicies for enhanced security using
-mutual TLS (mTLS) identity verification.
+When using Istio service mesh, you can automatically generate Istio AuthorizationPolicies alongside NetworkPolicies. This provides service mesh-level security using SPIFFE identity verification (for k8s rules with service accounts) or IP-based filtering (for CIDR rules).
 
-#### Enabling AuthorizationPolicies
-
-AuthorizationPolicies are generated when:
-
-1. `networkPolicies.ingress.generateAuthorizationPolicies` is set to `true`
-2. A service account identity is specified in the ingress rule using the `@`
-   prefix
+Enable AuthorizationPolicy generation:
 
 ```yaml
+istio:
+  authorizationPolicies:
+    generateFromNetpol: true
 networkPolicies:
   enabled: true
   ingress:
-    generateAuthorizationPolicies: true # Enable AuthorizationPolicy generation
     to:
-      # Standard NetworkPolicy only (no identity specified)
       api:
         from:
           k8s:
-            backend/worker: true
-
-      # NetworkPolicy + AuthorizationPolicy (identity specified)
-      secure-api:
-        from:
-          # The service account "api-sa" must exist in the "backend" namespace
-          k8s:
-            api-sa@backend/worker: true
+            backend/worker: true # NetworkPolicy only
+            api-sa@backend/worker: true # NetworkPolicy + AuthorizationPolicy (SPIFFE)
+          cidr:
+            192.168.1.0/24: true # NetworkPolicy + AuthorizationPolicy (IP-based)
 ```
 
-#### How AuthorizationPolicy Generation Works
+For comprehensive documentation on AuthorizationPolicy generation, including:
+- How generation works for k8s and CIDR rules
+- SPIFFE identity verification
+- IP-based access control with `ipBlocks`
+- Port handling and examples
+- Configuration options
 
-When you specify an identity prefix (e.g., `api-sa@`), the framework:
-
-1. Generates a standard NetworkPolicy for L3/L4 network isolation
-2. Generates an Istio AuthorizationPolicy that enforces SPIFFE identity
-   verification
-
-The AuthorizationPolicy uses the SPIFFE ID format:
-`cluster.local/ns/<namespace>/sa/<service-account>`
-
-#### AuthorizationPolicy Examples
-
-**Basic Identity-based Access:**
-
-```yaml
-networkPolicies:
-  ingress:
-    generateAuthorizationPolicies: true
-    to:
-      database:
-        from:
-          # Only "app" pods with "app-sa" service account in "backend" namespace can access
-          k8s:
-            app-sa@backend/app: true
-```
-
-Generates both:
-
-1. NetworkPolicy: `allow-ingress-to-database-any-port-from-ns-backend-pod-app`
-2. AuthorizationPolicy:
-   `allow-ingress-to-database-any-port-from-ns-backend-pod-app-with-identity-app-sa`
-   - Enforces SPIFFE identity: `cluster.local/ns/backend/sa/app-sa`
-
-**Port-specific Access with Identity:**
-
-```yaml
-networkPolicies:
-  ingress:
-    generateAuthorizationPolicies: true
-    to:
-      tcp://api:8443:
-        from:
-          k8s:
-            frontend-sa@frontend/web: true
-```
-
-**Multiple Ports with Identity:**
-
-```yaml
-networkPolicies:
-  ingress:
-    generateAuthorizationPolicies: true
-    to:
-      "database:[5432,5433]":
-        from:
-          k8s:
-            db-client-sa@backend/app: true
-```
-
-**Custom Pod Selectors with Identity:**
-
-```yaml
-networkPolicies:
-  ingress:
-    generateAuthorizationPolicies: true
-    to:
-      api-service:
-        podSelector:
-          matchLabels:
-            tier: api
-            version: v2
-        from:
-          k8s:
-            client-sa@frontend/webapp: true
-```
-
-#### Important Notes
-
-1. **Service Account Must Exist**: The specified service account (e.g.,
-   `api-sa`) must exist in the source namespace
-2. **Istio Required**: AuthorizationPolicies require Istio to be installed and
-   both local and remote pods be part of the mesh
-3. **mTLS Enabled**: Istio must be configured with mTLS for SPIFFE identity
-   verification to work
-4. **Backward Compatible**: If `generateAuthorizationPolicies` is false or no
-   identity is specified, only NetworkPolicies are created
+See the [Authorization Policies documentation](../authorization-policies/README.md).
 
 ## Labels and Annotations
 

@@ -12,14 +12,17 @@
   Istio service mesh resources including VirtualServices, ServiceEntries,
   NetworkPolicies, and AuthorizationPolicies for ingress traffic routing.
 
-- **[Resource Graph](RESOURCE-GRAPH.md)** - Visual representation of how
+- **[Authorization Policies](authorization-policies/README.md)** - Guide to
+  generating and configuring Istio AuthorizationPolicies alongside NetworkPolicies
+  for comprehensive service mesh security.
+
+- **[Resource Graph](RESOURCE_GRAPH.md)** - Visual representation of how
   bb-common components interact and generate Kubernetes resources.
 
 ## Coming Soon
 
 Documentation for upcoming features:
 
-- Authorization Policies
 - Service Entries
 - Peer Authentications
 - Virtual Services
