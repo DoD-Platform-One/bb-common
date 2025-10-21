@@ -1,4 +1,4 @@
-{{- define "bb-common.authorization-policies.generate.from-network-policy" }}
+{{- define "bb-common.istio.authorization-policies.generate.from-cidr-network-policy" }}
   {{- $ctx := index . 0 }}
   {{- $netpol := index . 1 }}
   {{- $ruleKey := index . 2 }}
@@ -7,32 +7,31 @@
   {{- $labels := index . 5 }}
   {{- $annotations := index . 6 }}
   {{- $local := index . 7 }}
-  
-  {{- $remote := include "bb-common.network-policies.ingress.parse.k8s-remote-key" $ruleKey | fromYaml }}
+
+  {{- $remote := include "bb-common.network-policies.ingress.parse.cidr-remote-key" $ruleKey | fromYaml }}
 
   {{- $authzPolicy := dict }}
   {{- $_ := set $authzPolicy "apiVersion" "security.istio.io/v1" }}
   {{- $_ := set $authzPolicy "kind" "AuthorizationPolicy" }}
 
-  {{- /* Use the NetworkPolicy name and just append the identity */}}
-  {{- $name = printf "%s-with-identity-%s" $netpol.metadata.name $remote.identity }}
-  {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/from-spiffe" $ruleKey }}
-  {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/identity" $remote.identity }}
+  {{- /* Use the NetworkPolicy name directly since it already contains CIDR info */}}
+  {{- $name = $netpol.metadata.name }}
+  {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/from-cidr" $ruleKey }}
+  {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/cidr" $remote.cidr }}
 
   {{- $metadata := dict "name" $name "labels" $labels "annotations" $annotations "namespace" $ctx.Release.Namespace }}
   {{- $_ := set $authzPolicy "metadata" $metadata }}
 
   {{- $spec := dict }}
-  
+
   {{- $_ := set $spec "selector" $netpol.spec.podSelector }}
 
   {{- $rules := list }}
   {{- $rule := dict }}
 
-  {{- $principals := list }}
-  {{- $spiffeId := printf "cluster.local/ns/%s/sa/%s" $remote.namespace $remote.identity }}
-  {{- $principals = append $principals $spiffeId }}
-  {{- $_ := set $rule "from" (list (dict "source" (dict "principals" $principals))) }}
+  {{- /* Set the source with ipBlocks for CIDR-based rules */}}
+  {{- $ipBlocks := list $remote.cidr }}
+  {{- $_ := set $rule "from" (list (dict "source" (dict "ipBlocks" $ipBlocks))) }}
 
   {{- if $netpol.spec.ingress }}
     {{- $firstRule := index $netpol.spec.ingress 0 }}
@@ -63,6 +62,6 @@
   {{- $_ := set $spec "action" "ALLOW" }}
 
   {{- $_ := set $authzPolicy "spec" $spec }}
-  
+
   {{- $authzPolicy | toYaml }}
 {{- end }}

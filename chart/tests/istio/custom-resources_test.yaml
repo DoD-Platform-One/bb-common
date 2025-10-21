@@ -1,0 +1,149 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Istio Custom Resources Tests
+templates:
+  - templates/istio/render.yaml
+release:
+  name: test
+set:
+  istio:
+    enabled: true
+    hardened:
+      enabled: true
+tests:
+  - it: must create custom ServiceEntry
+    set:
+      istio.hardened.customServiceEntries:
+        - name: external-api
+          spec:
+            hosts:
+              - api.external.com
+            ports:
+              - number: 443
+                name: https
+                protocol: HTTPS
+            location: MESH_EXTERNAL
+            resolution: DNS
+    documentSelector:
+      path: kind
+      value: ServiceEntry
+    asserts:
+      - equal:
+          path: metadata.name
+          value: external-api
+      - equal:
+          path: spec.hosts
+          value:
+            - api.external.com
+
+  - it: must create custom AuthorizationPolicy
+    set:
+      istio.hardened.customAuthorizationPolicies:
+        - name: deny-all
+          spec:
+            selector:
+              matchLabels:
+                app: sensitive
+            action: DENY
+            rules:
+              - from:
+                  - source:
+                      notNamespaces:
+                        - trusted
+    documentSelector:
+      path: kind
+      value: AuthorizationPolicy
+    asserts:
+      - equal:
+          path: metadata.name
+          value: deny-all
+      - equal:
+          path: spec.action
+          value: DENY
+
+  - it: must create multiple custom ServiceEntries
+    set:
+      istio.hardened.customServiceEntries:
+        - name: external-api
+          spec:
+            hosts:
+              - api.external.com
+        - name: database
+          spec:
+            hosts:
+              - db.external.com
+    asserts:
+      - documentSelector:
+          path: metadata.name
+          value: external-api
+        isKind:
+          of: ServiceEntry
+      - documentSelector:
+          path: metadata.name
+          value: database
+        isKind:
+          of: ServiceEntry
+
+  - it: must create multiple custom AuthorizationPolicies
+    set:
+      istio.hardened.customAuthorizationPolicies:
+        - name: allow-frontend
+          spec:
+            action: ALLOW
+        - name: deny-admin
+          spec:
+            action: DENY
+    asserts:
+      - documentSelector:
+          path: metadata.name
+          value: allow-frontend
+        isKind:
+          of: AuthorizationPolicy
+      - documentSelector:
+          path: metadata.name
+          value: deny-admin
+        isKind:
+          of: AuthorizationPolicy
+
+  - it: must support labels and annotations on custom ServiceEntry
+    set:
+      istio.hardened.customServiceEntries:
+        - name: external-api
+          labels:
+            team: platform
+            environment: production
+          annotations:
+            description: "External API service"
+          spec:
+            hosts:
+              - api.external.com
+    documentSelector:
+      path: kind
+      value: ServiceEntry
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.annotations.description
+          value: "External API service"
+
+  - it: must support labels and annotations on custom AuthorizationPolicy
+    set:
+      istio.hardened.customAuthorizationPolicies:
+        - name: custom-policy
+          labels:
+            security-level: high
+          annotations:
+            owner: security-team
+          spec:
+            action: ALLOW
+    documentSelector:
+      path: kind
+      value: AuthorizationPolicy
+    asserts:
+      - equal:
+          path: metadata.labels.security-level
+          value: high
+      - equal:
+          path: metadata.annotations.owner
+          value: security-team

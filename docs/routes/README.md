@@ -220,31 +220,31 @@ This ensures that NetworkPolicy and AuthorizationPolicy resources are always cre
 
 Basic web application exposed through a gateway:
 
-See [routes-simple-application-routing.yaml](../chart/tests/values/routes-simple-application-routing.yaml) for the complete configuration.
+See [routes-simple-application-routing.yaml](../../chart/tests/routes/values/routes-simple-application-routing.yaml) for the complete configuration.
 
 ### Multiple Services
 
 Multiple services with different routing configurations:
 
-See [routes-multiple-services.yaml](../chart/tests/values/routes-multiple-services.yaml) for the complete configuration.
+See [routes-multiple-services.yaml](../../chart/tests/routes/values/routes-multiple-services.yaml) for the complete configuration.
 
 ### Advanced HTTP Rules
 
 Custom routing with path-based rules:
 
-See [routes-advanced-http-rules.yaml](../chart/tests/values/routes-advanced-http-rules.yaml) for the complete configuration.
+See [routes-advanced-http-rules.yaml](../../chart/tests/routes/values/routes-advanced-http-rules.yaml) for the complete configuration.
 
 ### Custom Gateway Configuration
 
 Using different gateways for external and internal services:
 
-See [routes-custom-gateway-configuration.yaml](../chart/tests/values/routes-custom-gateway-configuration.yaml) for the complete configuration.
+See [routes-custom-gateway-configuration.yaml](../../chart/tests/routes/values/routes-custom-gateway-configuration.yaml) for the complete configuration.
 
 ### Labels and Annotations
 
 Apply custom labels and annotations to all generated resources using the metadata structure:
 
-See [routes-labels-and-annotations.yaml](../chart/tests/values/routes-labels-and-annotations.yaml) for the complete configuration.
+See [routes-labels-and-annotations.yaml](../../chart/tests/routes/values/routes-labels-and-annotations.yaml) for the complete configuration.
 
 > **Note**: Custom labels and annotations specified in the route metadata configuration are applied to all generated resources (VirtualService, ServiceEntry, NetworkPolicy, and AuthorizationPolicy).
 

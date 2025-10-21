@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Istio Authorization Policies Additional Map Tests
+templates:
+  - templates/istio/render.yaml
+release:
+  name: test
+set:
+  istio:
+    enabled: true
+    authorizationPolicies:
+      enabled: true
+  networkPolicies:
+    enabled: false
+    ingress:
+      defaults:
+        enabled: false
+tests:
+  - it: should create policy using map structure
+    set:
+      istio.authorizationPolicies:
+        additionalPolicies:
+          my-test-policy:
+            enabled: true
+            spec:
+              selector:
+                matchLabels:
+                  app: test-app
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: metadata.name
+          value: my-test-policy
+        equal:
+          path: spec.selector.matchLabels.app
+          value: test-app
+
+  - it: should support name override in map structure
+    set:
+      istio.authorizationPolicies:
+        additionalPolicies:
+          map-key:
+            enabled: true
+            name: custom-name
+            spec:
+              selector:
+                matchLabels:
+                  app: test-app
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentSelector:
+          path: metadata.name
+          value: custom-name
+        isKind:
+          of: AuthorizationPolicy
+
+  - it: should create multiple policies from map
+    set:
+      istio.authorizationPolicies:
+        additionalPolicies:
+          policy-one:
+            enabled: true
+            spec:
+              selector:
+                matchLabels:
+                  app: app-one
+          policy-two:
+            enabled: true
+            spec:
+              selector:
+                matchLabels:
+                  app: app-two
+    asserts:
+      - hasDocuments:
+          count: 3
+      - documentSelector:
+          path: metadata.name
+          value: policy-one
+        equal:
+          path: spec.selector.matchLabels.app
+          value: app-one
+      - documentSelector:
+          path: metadata.name
+          value: policy-two
+        equal:
+          path: spec.selector.matchLabels.app
+          value: app-two

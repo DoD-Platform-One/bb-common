@@ -95,6 +95,7 @@ fi
 # Check which bb-common render templates are being used
 is_using_network_policies=false
 is_using_routes=false
+is_using_istio=false
 
 if grep -r -E 'bb-common\.network-policies\.render' "$chart_dir" >/dev/null 2>&1; then
   is_using_network_policies=true
@@ -104,8 +105,12 @@ if grep -r -E 'bb-common\.routes\.render' "$chart_dir" >/dev/null 2>&1; then
   is_using_routes=true
 fi
 
+if grep -r -E 'bb-common\.istio\.render' . >/dev/null 2>&1; then
+  is_using_istio=true
+fi
+
 # Update schemas if any bb-common templates are used
-if $is_using_network_policies || $is_using_routes; then
+if $is_using_network_policies || $is_using_routes || $is_using_istio; then
   echo "Updating bb-common schema."
 
   # Create temp directory for schema operations
@@ -140,6 +145,11 @@ if $is_using_network_policies || $is_using_routes; then
     if $is_using_routes; then
       echo "Updating routes schema."
       merge_property "${temp_dir}/working-schema.json" "${bb_common_schema}" "routes"
+    fi
+
+    if $is_using_istio; then
+      echo "Updating istio schema."
+      merge_property "${temp_dir}/working-schema.json" "${bb_common_schema}" "istio"
     fi
 
     # Replace current schema with merged version

@@ -1,3 +1,73 @@
+# Istio Configuration
+istio:
+  # Enable/disable Istio integration
+  enabled: false
+
+  # Istio sidecar injection mode (enabled, disabled, or empty for no label)
+  # injection: enabled
+
+  # Mutual TLS configuration
+  # mtls:
+  #   mode: STRICT  # STRICT, PERMISSIVE, or DISABLE
+
+  # Hardened mode configuration for Istio
+  hardened:
+    # Enable/disable hardened mode (restricts outbound traffic)
+    enabled: false
+    # Outbound traffic policy mode (REGISTRY_ONLY or ALLOW_ANY)
+    outboundTrafficPolicyMode: REGISTRY_ONLY
+
+  # Authorization Policies Configuration
+  authorizationPolicies:
+    # Enable/disable the generation of Istio AuthorizationPolicies
+    enabled: false
+
+    # # Generate Istio AuthorizationPolicies from NetworkPolicy configurations
+    # # Requires service account identity prefix (e.g., sa@namespace/pod)
+    # generateFromNetpol: false
+
+    # # Default authorization policies (enabled by default when istio.authorizationPolicies.enabled is true)
+    # defaults:
+    #   # Enable/disable all default policies at once
+    #   enabled: true
+    #   # # Individual default policies (optional - only specify to disable)
+    #   # denyAll:
+    #   #   enabled: true  # Deny all ingress by default (allow-nothing policy)
+    #   # allowInNamespace:
+    #   #   enabled: true  # Allow ingress from same namespace
+
+    # # Additional custom AuthorizationPolicies (map structure to avoid override issues)
+    # additionalPolicies:
+    #   my-custom-policy:
+    #     enabled: true
+    #     # Optional: override the policy name (defaults to map key)
+    #     # name: custom-policy-name
+    #     # Optional metadata
+    #     labels:
+    #       app: my-app
+    #     annotations:
+    #       description: "Custom authorization policy"
+    #     # Istio AuthorizationPolicy spec
+    #     spec:
+    #       selector:
+    #         matchLabels:
+    #           app: my-app
+    #       rules:
+    #         - from:
+    #           - source:
+    #               principals: ["cluster.local/ns/default/sa/my-service-account"]
+    #   another-policy:
+    #     enabled: true
+    #     spec:
+    #       selector:
+    #         matchLabels:
+    #           app: another-app
+    #       action: DENY
+    #       rules:
+    #         - to:
+    #           - operation:
+    #               paths: ["/admin/*"]
+
 # Network Policies Configuration
 networkPolicies:
   # Enable/disable the generation of NetworkPolicies
@@ -9,10 +79,6 @@ networkPolicies:
 
   # # Ingress rules control inbound traffic to pods
   # ingress:
-  #   # Generate Istio AuthorizationPolicies alongside NetworkPolicies
-  #   # Requires service account identity prefix (e.g., sa@namespace/pod)
-  #   generateAuthorizationPolicies: true
-  #
   #   # Default ingress policies (all enabled by default when networkPolicies.enabled is true)
   #   defaults:
   #     # Enable/disable all default policies at once
