@@ -45,7 +45,7 @@
         {{- $netpol = merge $netpol (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
         {{- $netpols = append $netpols $netpol }}
 
-        {{- if dig "authorizationPolicies" "generateFromNetpol" false $ctx.Values.istio }}
+        {{- if and (hasKey $ctx.Values "istio") (dig "authorizationPolicies" "generateFromNetpol" false $ctx.Values.istio) }}
           {{- if eq $remoteType "k8s" }}
             {{- $authzPolicy := include "bb-common.istio.authorization-policies.generate.from-k8s-network-policy" $args | fromYaml }}
             {{- $authzPolicy := merge $authzPolicy (include "bb-common.network-policies.metadata-overrides" (list $localConfig $remoteConfig) | fromYaml) }}
