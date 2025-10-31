@@ -7,7 +7,7 @@ BB-Common provides base Istio resources to secure and configure service mesh beh
 When Istio is enabled, BB-Common creates foundational security and networking resources:
 
 - **PeerAuthentication**: Enforces mutual TLS between services
-- **Sidecar**: Controls outbound traffic policy (when hardened mode is enabled)
+- **Sidecar**: Controls outbound traffic policy (when enabled)
 - **AuthorizationPolicies**: Implements service-to-service authorization (see [Authorization Policies](../authorization-policies/README.md))
 - **Custom Resources**: Allows end users to define application-specific ServiceEntries and AuthorizationPolicies for last-mile configuration
 
@@ -39,9 +39,9 @@ istio:
     mode: STRICT  # Options: STRICT, PERMISSIVE, DISABLE
 ```
 
-### Sidecar (Hardened Mode)
+### Sidecar
 
-When hardened mode is enabled, creates a Sidecar resource that restricts outbound traffic to only services registered in the Istio service registry.
+When enabled, creates a Sidecar resource that restricts outbound traffic to only services registered in the Istio service registry.
 
 **Resource Name**: `{{ .Release.Name }}-sidecar`
 
@@ -52,7 +52,7 @@ When hardened mode is enabled, creates a Sidecar resource that restricts outboun
 ```yaml
 istio:
   enabled: true
-  hardened:
+  sidecar:
     enabled: true
     outboundTrafficPolicyMode: REGISTRY_ONLY  # Options: REGISTRY_ONLY, ALLOW_ANY
 ```
@@ -76,9 +76,10 @@ ServiceEntries allow you to add external services to the Istio service registry,
 ```yaml
 istio:
   enabled: true
-  hardened:
+  sidecar:
     enabled: true
-    customServiceEntries:
+  serviceEntries:
+    custom:
       - name: external-database
         labels:
           app: myapp
@@ -121,9 +122,9 @@ Custom AuthorizationPolicies allow you to define fine-grained access control rul
 ```yaml
 istio:
   enabled: true
-  hardened:
+  authorizationPolicies:
     enabled: true
-    customAuthorizationPolicies:
+    custom:
       - name: deny-admin-paths
         labels:
           security-level: high

@@ -7,12 +7,10 @@ release:
 set:
   istio:
     enabled: true
-    hardened:
-      enabled: true
 tests:
   - it: must create custom ServiceEntry
     set:
-      istio.hardened.customServiceEntries:
+      istio.serviceEntries.custom:
         - name: external-api
           spec:
             hosts:
@@ -37,7 +35,7 @@ tests:
 
   - it: must create custom AuthorizationPolicy
     set:
-      istio.hardened.customAuthorizationPolicies:
+      istio.authorizationPolicies.custom:
         - name: deny-all
           spec:
             selector:
@@ -62,7 +60,7 @@ tests:
 
   - it: must create multiple custom ServiceEntries
     set:
-      istio.hardened.customServiceEntries:
+      istio.serviceEntries.custom:
         - name: external-api
           spec:
             hosts:
@@ -85,7 +83,7 @@ tests:
 
   - it: must create multiple custom AuthorizationPolicies
     set:
-      istio.hardened.customAuthorizationPolicies:
+      istio.authorizationPolicies.custom:
         - name: allow-frontend
           spec:
             action: ALLOW
@@ -106,7 +104,7 @@ tests:
 
   - it: must support labels and annotations on custom ServiceEntry
     set:
-      istio.hardened.customServiceEntries:
+      istio.serviceEntries.custom:
         - name: external-api
           labels:
             team: platform
@@ -129,7 +127,7 @@ tests:
 
   - it: must support labels and annotations on custom AuthorizationPolicy
     set:
-      istio.hardened.customAuthorizationPolicies:
+      istio.authorizationPolicies.custom:
         - name: custom-policy
           labels:
             security-level: high

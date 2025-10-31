@@ -182,9 +182,46 @@ istio:
 
 ### Additional Policies
 
-You can define custom AuthorizationPolicies that will be rendered alongside the automatically generated ones. The configuration uses a map structure to avoid override issues when using multiple values files.
+You can define custom AuthorizationPolicies that will be rendered alongside the automatically generated ones.
 
-**Note**: For last-mile configuration needs, you can also use `istio.hardened.customAuthorizationPolicies` which is documented in the [Istio Resources](../istio/README.md#custom-authorizationpolicies) documentation. While this duplicates the `additionalPolicies` functionality, it is maintained for backwards compatibility with existing configurations.
+BB-Common provides two ways to define custom policies:
+
+#### Array Format (`custom`)
+
+Simple list format for straightforward use cases:
+
+```yaml
+istio:
+  authorizationPolicies:
+    enabled: true
+    custom:
+      - name: deny-admin-paths
+        labels:
+          security-level: high
+        spec:
+          selector:
+            matchLabels:
+              app: web-frontend
+          action: DENY
+          rules:
+            - to:
+                - operation:
+                    paths: ["/admin/*"]
+      - name: allow-metrics
+        spec:
+          selector:
+            matchLabels:
+              app: my-app
+          action: ALLOW
+          rules:
+            - from:
+                - source:
+                    namespaces: ["monitoring"]
+```
+
+#### Map Format (`additionalPolicies`)
+
+Keyed format to avoid override issues when using multiple values files:
 
 ```yaml
 istio:

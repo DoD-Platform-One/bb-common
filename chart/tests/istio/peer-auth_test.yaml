@@ -48,7 +48,7 @@ tests:
   - it: should create both Sidecar and PeerAuthentication when both conditions are met
     set:
       istio.enabled: true
-      istio.hardened.enabled: true
+      istio.sidecar.enabled: true
     asserts:
       - hasDocuments:
           count: 2

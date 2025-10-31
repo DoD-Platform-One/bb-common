@@ -9,25 +9,25 @@ tests:
   - it: should not create Sidecar when istio is disabled
     set:
       istio.enabled: false
-      istio.hardened.enabled: true
+      istio.sidecar.enabled: true
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should not create Sidecar when hardened mode is disabled (but creates PeerAuth)
+  - it: should not create Sidecar when sidecar is disabled (but creates PeerAuth)
     set:
       istio.enabled: true
-      istio.hardened.enabled: false
+      istio.sidecar.enabled: false
     asserts:
       - hasDocuments:
           count: 1
       - isKind:
           of: PeerAuthentication
 
-  - it: should create both Sidecar and PeerAuthentication when istio and hardened mode are enabled
+  - it: should create both Sidecar and PeerAuthentication when istio and sidecar are enabled
     set:
       istio.enabled: true
-      istio.hardened.enabled: true
+      istio.sidecar.enabled: true
     asserts:
       - hasDocuments:
           count: 2
@@ -57,8 +57,8 @@ tests:
   - it: should use custom outboundTrafficPolicyMode when specified
     set:
       istio.enabled: true
-      istio.hardened.enabled: true
-      istio.hardened.outboundTrafficPolicyMode: ALLOW_ANY
+      istio.sidecar.enabled: true
+      istio.sidecar.outboundTrafficPolicyMode: ALLOW_ANY
     asserts:
       - hasDocuments:
           count: 2

@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes Tests for Conditional NetworkPolicy and AuthorizationPolicy
+templates:
+  - templates/routes/render.yaml
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
+tests:
+  - it: should create both NetworkPolicy and AuthorizationPolicy when both flags are true
+    set:
+      networkPolicies.enabled: true
+      istio.authorizationPolicies.enabled: true
+      routes:
+        inbound:
+          testapp:
+            enabled: true
+            gateways:
+              - istio-gateway/public-ingressgateway
+            hosts:
+              - testapp.example.com
+            service: testapp-service
+            port: 8080
+            selector:
+              app.kubernetes.io/name: testapp
+    asserts:
+      - hasDocuments:
+          count: 4  # VirtualService, ServiceEntry, NetworkPolicy, AuthorizationPolicy
+
+  - it: should create only NetworkPolicy when authorizationPolicies is disabled
+    set:
+      networkPolicies.enabled: true
+      istio.authorizationPolicies.enabled: false
+      routes:
+        inbound:
+          testapp:
+            enabled: true
+            gateways:
+              - istio-gateway/public-ingressgateway
+            hosts:
+              - testapp.example.com
+            service: testapp-service
+            port: 8080
+            selector:
+              app.kubernetes.io/name: testapp
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-testapp-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+
+  - it: should create only AuthorizationPolicy when networkPolicies is disabled
+    set:
+      networkPolicies.enabled: false
+      istio.authorizationPolicies.enabled: true
+      routes:
+        inbound:
+          testapp:
+            enabled: true
+            gateways:
+              - istio-gateway/public-ingressgateway
+            hosts:
+              - testapp.example.com
+            service: testapp-service
+            port: 8080
+            selector:
+              app.kubernetes.io/name: testapp
+    documentSelector:
+      path: metadata.name
+      value: testapp-public-ingressgateway-authz-policy
+    asserts:
+      - equal:
+          path: kind
+          value: AuthorizationPolicy
+
+  - it: should NOT create either policy when both flags are false (default)
+    set:
+      routes:
+        inbound:
+          testapp:
+            enabled: true
+            gateways:
+              - istio-gateway/public-ingressgateway
+            hosts:
+              - testapp.example.com
+            service: testapp-service
+            port: 8080
+            selector:
+              app.kubernetes.io/name: testapp
+    asserts:
+      - hasDocuments:
+          count: 2  # Only VirtualService and ServiceEntry
