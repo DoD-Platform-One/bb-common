@@ -2,6 +2,9 @@
 suite: Routes - Multiple Services
 templates:
   - templates/routes/render.yaml
+set:
+  networkPolicies.enabled: true
+  istio.authorizationPolicies.enabled: true
 values:
   - ./values/routes-multiple-services.yaml
 capabilities:

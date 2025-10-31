@@ -7,18 +7,9 @@
     {{- $istioEnabled = dig "enabled" false $ctx.Values.istio }}
   {{- end }}
 
-  {{- $hardenedEnabled := false }}
-  {{- if hasKey $ctx.Values "istio" }}
-    {{- if hasKey $ctx.Values.istio "hardened" }}
-      {{- $hardenedEnabled = dig "enabled" false $ctx.Values.istio.hardened }}
-    {{- end }}
-  {{- end }}
+  {{- if $istioEnabled }}
+    {{- $customAuthzPolicies := dig "authorizationPolicies" "custom" list $ctx.Values.istio }}
 
-  {{- if and $istioEnabled $hardenedEnabled }}
-    {{- $customAuthzPolicies := list }}
-    {{- if hasKey $ctx.Values.istio.hardened "customAuthorizationPolicies" }}
-      {{- $customAuthzPolicies = $ctx.Values.istio.hardened.customAuthorizationPolicies }}
-    {{- end }}
     {{- range $policy := $customAuthzPolicies }}
       {{- $resource := dict }}
       {{- $_ := set $resource "apiVersion" "security.istio.io/v1" }}

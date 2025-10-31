@@ -3,6 +3,14 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.10.0] - 2025-10-24
+
+### Fixed
+
+- Remove istio.hardened flag in favor of explicit sidecar configuration.
+- Move customAuthorizationPolicies and customServiceEntries to `istio.authorizationPolicies.custom` and `istio.serviceEntries.custom`
+- Ensure global enabled flags for NetworkPolicies and AuthorizationPolicies are respected by routes
+
 ## [0.9.1] - 2025-10-22
 
 ### Fixed

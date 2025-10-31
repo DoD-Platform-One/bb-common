@@ -4,6 +4,8 @@ templates:
   - templates/routes/render.yaml
 set:
   render: true
+  networkPolicies.enabled: true
+  istio.authorizationPolicies.enabled: true
 values:
   - ./values/routes.yaml
 capabilities:

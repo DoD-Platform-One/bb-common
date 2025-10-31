@@ -2,6 +2,9 @@
 suite: Routes - Simple Application Routing
 templates:
   - templates/routes/render.yaml
+set:
+  networkPolicies.enabled: true
+  istio.authorizationPolicies.enabled: true
 values:
   - ./values/routes-simple-application-routing.yaml
 capabilities:

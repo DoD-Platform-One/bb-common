@@ -23,11 +23,18 @@
 
         {{- if $effectiveSelector }}
           {{- $routeWithSelector := merge $route (dict "selector" $effectiveSelector) }}
-          {{- $networkPolicy := include "bb-common.routes.netpol" (list $ctx $name $routeWithSelector) | fromYaml }}
-          {{- $resources = append $resources $networkPolicy }}
 
-          {{- $authorizationPolicy := include "bb-common.routes.authz" (list $ctx $name $routeWithSelector) | fromYaml }}
-          {{- $resources = append $resources $authorizationPolicy }}
+          {{- /* Only create NetworkPolicy if networkPolicies.enabled is true */}}
+          {{- if dig "enabled" false ($ctx.Values.networkPolicies | default dict) }}
+            {{- $networkPolicy := include "bb-common.routes.netpol" (list $ctx $name $routeWithSelector) | fromYaml }}
+            {{- $resources = append $resources $networkPolicy }}
+          {{- end }}
+
+          {{- /* Only create AuthorizationPolicy if istio.authorizationPolicies.enabled is true */}}
+          {{- if dig "authorizationPolicies" "enabled" false ($ctx.Values.istio | default dict) }}
+            {{- $authorizationPolicy := include "bb-common.routes.authz" (list $ctx $name $routeWithSelector) | fromYaml }}
+            {{- $resources = append $resources $authorizationPolicy }}
+          {{- end }}
         {{- end }}
 
       {{- end }}

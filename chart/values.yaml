@@ -10,12 +10,32 @@ istio:
   # mtls:
   #   mode: STRICT  # STRICT, PERMISSIVE, or DISABLE
 
-  # Hardened mode configuration for Istio
-  hardened:
-    # Enable/disable hardened mode (restricts outbound traffic)
+  # Sidecar configuration for Istio
+  sidecar:
+    # Enable/disable Istio Sidecar resource (restricts outbound traffic)
     enabled: false
     # Outbound traffic policy mode (REGISTRY_ONLY or ALLOW_ANY)
     outboundTrafficPolicyMode: REGISTRY_ONLY
+
+  # Service Entries Configuration
+  serviceEntries:
+    # List of custom Istio ServiceEntry resources (array format)
+    custom: []
+    # # Example:
+    # # - name: external-api
+    # #   labels:
+    # #     app: my-app
+    # #   annotations:
+    # #     description: "External API service"
+    # #   spec:
+    # #     hosts:
+    # #       - api.external.com
+    # #     ports:
+    # #       - number: 443
+    # #         name: https
+    # #         protocol: HTTPS
+    # #     location: MESH_EXTERNAL
+    # #     resolution: DNS
 
   # Authorization Policies Configuration
   authorizationPolicies:
@@ -35,6 +55,24 @@ istio:
     #   #   enabled: true  # Deny all ingress by default (allow-nothing policy)
     #   # allowInNamespace:
     #   #   enabled: true  # Allow ingress from same namespace
+
+    # List of custom Istio AuthorizationPolicy resources (array format)
+    custom: []
+    # # Example:
+    # # - name: custom-policy
+    # #   labels:
+    # #     security-level: high
+    # #   annotations:
+    # #     owner: security-team
+    # #   spec:
+    # #     selector:
+    # #       matchLabels:
+    # #         app: foo
+    # #     action: DENY
+    # #     rules:
+    # #       - to:
+    # #           - operation:
+    # #               paths: ["/admin/*"]
 
     # # Additional custom AuthorizationPolicies (map structure to avoid override issues)
     # additionalPolicies:

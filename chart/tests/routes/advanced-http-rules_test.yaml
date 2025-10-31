@@ -2,6 +2,9 @@
 suite: Routes - Advanced HTTP Rules
 templates:
   - templates/routes/render.yaml
+set:
+  networkPolicies.enabled: true
+  istio.authorizationPolicies.enabled: true
 values:
   - ./values/routes-advanced-http-rules.yaml
 capabilities:

@@ -2,6 +2,9 @@
 suite: Routes - Custom Gateway Configuration
 templates:
   - templates/routes/render.yaml
+set:
+  networkPolicies.enabled: true
+  istio.authorizationPolicies.enabled: true
 values:
   - ./values/routes-custom-gateway-configuration.yaml
 capabilities:

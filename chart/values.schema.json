@@ -63,13 +63,13 @@
           },
           "additionalProperties": false
         },
-        "hardened": {
+        "sidecar": {
           "type": "object",
-          "description": "Hardened mode configuration for Istio",
+          "description": "Istio Sidecar resource configuration for outbound traffic control",
           "properties": {
             "enabled": {
               "type": "boolean",
-              "description": "Enable hardened mode (restricts outbound traffic)",
+              "description": "Enable Istio Sidecar resource (restricts outbound traffic)",
               "default": false
             },
             "outboundTrafficPolicyMode": {
@@ -77,8 +77,15 @@
               "description": "Outbound traffic policy mode (REGISTRY_ONLY or ALLOW_ANY)",
               "enum": ["REGISTRY_ONLY", "ALLOW_ANY"],
               "default": "REGISTRY_ONLY"
-            },
-            "customServiceEntries": {
+            }
+          },
+          "additionalProperties": false
+        },
+        "serviceEntries": {
+          "type": "object",
+          "description": "Istio ServiceEntry resources configuration",
+          "properties": {
+            "custom": {
               "type": "array",
               "description": "List of custom Istio ServiceEntry resources",
               "items": {
@@ -109,8 +116,25 @@
                   }
                 }
               }
+            }
+          },
+          "additionalProperties": false
+        },
+        "authorizationPolicies": {
+          "type": "object",
+          "description": "Istio AuthorizationPolicies configuration for service mesh security",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable generation of Istio AuthorizationPolicies",
+              "default": false
             },
-            "customAuthorizationPolicies": {
+            "generateFromNetpol": {
+              "type": "boolean",
+              "description": "Generate Istio AuthorizationPolicies from NetworkPolicy configurations with SPIFFE-based identity verification when service account identities are specified",
+              "default": false
+            },
+            "custom": {
               "type": "array",
               "description": "List of custom Istio AuthorizationPolicy resources",
               "items": {
@@ -141,23 +165,6 @@
                   }
                 }
               }
-            }
-          },
-          "additionalProperties": false
-        },
-        "authorizationPolicies": {
-          "type": "object",
-          "description": "Istio AuthorizationPolicies configuration for service mesh security",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable generation of Istio AuthorizationPolicies",
-              "default": false
-            },
-            "generateFromNetpol": {
-              "type": "boolean",
-              "description": "Generate Istio AuthorizationPolicies from NetworkPolicy configurations with SPIFFE-based identity verification when service account identities are specified",
-              "default": false
             },
             "defaults": {
               "type": "object",
