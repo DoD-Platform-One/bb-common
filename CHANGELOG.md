@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.11.0] - 2025-11-07
+
+### Fixed
+
+- Added ambient specific network policies and associated tests and schema updates
+- Added ability to inject TCP port 15008 into network policies in support of ambient communication requirements
+
 ## [0.10.0] - 2025-10-24
 
 ### Fixed

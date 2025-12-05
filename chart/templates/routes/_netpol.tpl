@@ -43,5 +43,10 @@
   {{- $_ := set $spec "ingress" (list $ingress) }}
 
   {{- $_ := set $netpol "spec" $spec }}
+
+  {{- if dig "hbonePortInjection" "enabled" true $ctx.Values.networkPolicies }}
+    {{- $_ := include "bb-common.network-policies.inject-hbone-ports" (list (list $netpol) "ingress") | fromYaml }}
+  {{- end }}
+
   {{- $netpol | toYaml }}
 {{- end }}

@@ -6,6 +6,7 @@ release:
   name: test
 set:
   networkPolicies.enabled: true
+  networkPolicies.hbonePortInjection.enabled: false
   networkPolicies.ingress.defaults.enabled: false
   networkPolicies.egress.defaults.enabled: false
 tests:
@@ -497,3 +498,22 @@ tests:
         equal:
           path: spec.podSelector
           value: {}
+
+  - it: must inject the hbone port into egress rules when enabled
+    set:
+      networkPolicies.hbonePortInjection.enabled: true
+      networkPolicies.egress.from.api.to.k8s.database/postgres:5432: true
+    documentSelector:
+      path: metadata.name
+      value: allow-egress-from-api-to-ns-database-pod-postgres-tcp-port-5432
+    asserts:
+      - equal:
+          path: spec.egress[0].ports
+          value:
+            - port: 5432
+              protocol: TCP
+            - port: 15008
+              protocol: TCP
+      - equal:
+          path: metadata.labels["ambient.istio.network-policies.bigbang.dev/hbone-injected"]
+          value: "true"

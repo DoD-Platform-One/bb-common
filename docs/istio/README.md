@@ -22,6 +22,20 @@ istio:
 
 ## Resources Created
 
+### NetworkPolicy
+
+Creates a network policy that allows kubelet to contact readiness probes when operting in ambient mode. Please refer to [this link](https://istio.io/latest/docs/ambient/usage/networkpolicy/) for additional information/justification.
+
+**Resource Name**: `default-ingress-allow-ambient-kubelet`
+
+**Configuration**:
+
+```yaml
+istio:
+  ambient:
+    enabled: true
+```
+
 ### PeerAuthentication
 
 Enforces mutual TLS (mTLS) for service-to-service communication within the namespace.
@@ -42,6 +56,8 @@ istio:
 ### Sidecar
 
 When enabled, creates a Sidecar resource that restricts outbound traffic to only services registered in the Istio service registry.
+
+> **Note**: The Sidecar resource is separate from the Sidecar dataplane mode and is not applicable when using Ambient mode.
 
 **Resource Name**: `{{ .Release.Name }}-sidecar`
 

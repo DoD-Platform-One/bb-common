@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: bb-common.network-policies.inject-hbone-ports
+templates:
+  - templates/utils/self-test.yaml
+tests:
+  - it: must inject hbone and set a label if the netpol rule had ports but not hbone
+    set:
+      selfTest:
+        bb-common.network-policies.inject-hbone-ports:
+          resultIsYaml: true
+          args:
+          - - spec:
+                ingress:
+                - from:
+                  - podSelector:
+                      matchLabels:
+                        app: frontend
+                  ports: 
+                  - port: 80
+                    protocol: TCP
+          - "ingress"
+    asserts:
+      - equal:
+          path: result[0].metadata.labels["ambient.istio.network-policies.bigbang.dev/hbone-injected"]
+          value: "true"
+      - equal:
+          path: result[0].spec.ingress[0].ports
+          value: 
+          - port: 80
+            protocol: TCP
+          - port: 15008
+            protocol: TCP
+
+  - it: must not inject hbone if the netpol rule already had an hbone port
+    set:
+      selfTest:
+        bb-common.network-policies.inject-hbone-ports:
+          resultIsYaml: true
+          args:
+          - - spec:
+                ingress:
+                - from:
+                  - podSelector:
+                      matchLabels:
+                        app: frontend
+                  ports: 
+                  - port: 80
+                    protocol: TCP
+                  - port: 15008
+                    protocol: TCP
+          - "ingress"
+    asserts:
+      - notContains:
+          path: result[0].metadata.labels
+          content: 
+            ambient.istio.network-policies.bigbang.dev/hbone-injected: "true"
+      - lengthEqual:
+          path: result[0].spec.ingress[0].ports
+          count: 2
+
+  - it: must not inject hbone if the netpol rule did not originally have any ports
+    set:
+      selfTest:
+        bb-common.network-policies.inject-hbone-ports:
+          resultIsYaml: true
+          args:
+          - - spec:
+                ingress:
+                - from:
+                  - podSelector:
+                      matchLabels:
+                        app: frontend
+                  ports: []
+          - "ingress"
+    asserts:
+      - notContains:
+          path: result[0].metadata.labels
+          content: 
+            ambient.istio.network-policies.bigbang.dev/hbone-injected: "true"
+      - equal:
+          path: result[0].spec.ingress[0].ports
+          value: []

@@ -7,6 +7,8 @@ release:
 set:
   networkPolicies:
     enabled: true
+    hbonePortInjection:
+      enabled: false
     ingress:
       defaults:
         enabled: false
@@ -277,3 +279,22 @@ tests:
       - equal:
           path: metadata.labels["network-policies.bigbang.dev/direction"]
           value: ingress
+
+  - it: must inject the hbone port into ingress rules when enabled
+    set:
+      networkPolicies.hbonePortInjection.enabled: true
+      networkPolicies.ingress.to.api:8080.from.k8s.frontend/web: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-api-tcp-port-8080-from-ns-frontend-pod-web
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 8080
+              protocol: TCP
+            - port: 15008
+              protocol: TCP
+      - equal:
+          path: metadata.labels["ambient.istio.network-policies.bigbang.dev/hbone-injected"]
+          value: "true"

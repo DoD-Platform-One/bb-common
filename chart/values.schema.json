@@ -45,6 +45,17 @@
           "description": "Enable Istio integration",
           "default": false
         },
+        "ambient": {
+          "type": "object",
+          "description": "Istio ambient configuration",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable ambient mode settings",
+              "default": false
+            }
+          }
+        },
         "injection": {
           "type": "string",
           "description": "Istio sidecar injection mode (enabled, disabled, or empty for no label)",
@@ -270,6 +281,17 @@
           "type": "boolean",
           "description": "Enable network policies",
           "default": false
+        },
+        "hbonePortInjection": {
+          "type": "object",
+          "description": "Istio HBONE port injection configuration",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable/disable HBONE port (15008) injection into NetworkPolicy rules when ports are specified",
+              "default": true
+            }
+          }
         },
         "prependReleaseName": {
           "type": "boolean",
@@ -1036,197 +1058,197 @@
           "description": "Inbound routes configuration",
           "patternProperties": {
             "^[a-zA-Z0-9][a-zA-Z0-9_-]*$": {
-          "type": "object",
-          "description": "Named route configuration",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "Enable this route",
-              "default": true
-            },
-            "gateways": {
-              "type": "array",
-              "description": "List of Istio gateways to bind this VirtualService to",
-              "items": {
-                "type": "string",
-                "description": "Gateway reference in format 'namespace/gateway-name'"
-              },
-              "minItems": 1
-            },
-            "hosts": {
-              "type": "array",
-              "description": "List of host/domain names for this route. Supports templating.",
-              "items": {
-                "type": "string",
-                "description": "Hostname or domain. Can use Helm templating (e.g., '{{ .Values.domain }}')"
-              },
-              "minItems": 1
-            },
-            "service": {
-              "type": "string",
-              "description": "Target Kubernetes service name or FQDN. Supports templating."
-            },
-            "port": {
-              "oneOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ],
-              "description": "Target service port number. Supports templating for string values."
-            },
-            "metadata": {
               "type": "object",
-              "description": "Metadata applied to all generated resources",
+              "description": "Named route configuration",
               "properties": {
-                "labels": {
-                  "type": "object",
-                  "description": "Additional labels for all generated resources",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable this route",
+                  "default": true
                 },
-                "annotations": {
-                  "type": "object",
-                  "description": "Additional annotations for all generated resources",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                }
-              },
-              "additionalProperties": false
-            },
-            "selector": {
-              "type": "object",
-              "description": "Pod selector for generating NetworkPolicy and AuthorizationPolicy resources. When provided, automatic ingress policies will be created.",
-              "properties": {
-                "matchLabels": {
-                  "type": "object",
-                  "description": "Label selector for target pods",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "matchExpressions": {
+                "gateways": {
                   "type": "array",
-                  "description": "Expression-based label selector",
+                  "description": "List of Istio gateways to bind this VirtualService to",
+                  "items": {
+                    "type": "string",
+                    "description": "Gateway reference in format 'namespace/gateway-name'"
+                  },
+                  "minItems": 1
+                },
+                "hosts": {
+                  "type": "array",
+                  "description": "List of host/domain names for this route. Supports templating.",
+                  "items": {
+                    "type": "string",
+                    "description": "Hostname or domain. Can use Helm templating (e.g., '{{ .Values.domain }}')"
+                  },
+                  "minItems": 1
+                },
+                "service": {
+                  "type": "string",
+                  "description": "Target Kubernetes service name or FQDN. Supports templating."
+                },
+                "port": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Target service port number. Supports templating for string values."
+                },
+                "metadata": {
+                  "type": "object",
+                  "description": "Metadata applied to all generated resources",
+                  "properties": {
+                    "labels": {
+                      "type": "object",
+                      "description": "Additional labels for all generated resources",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "annotations": {
+                      "type": "object",
+                      "description": "Additional annotations for all generated resources",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "selector": {
+                  "type": "object",
+                  "description": "Pod selector for generating NetworkPolicy and AuthorizationPolicy resources. When provided, automatic ingress policies will be created.",
+                  "properties": {
+                    "matchLabels": {
+                      "type": "object",
+                      "description": "Label selector for target pods",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "matchExpressions": {
+                      "type": "array",
+                      "description": "Expression-based label selector",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string",
+                            "enum": [
+                              "In",
+                              "NotIn",
+                              "Exists",
+                              "DoesNotExist"
+                            ]
+                          },
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "http": {
+                  "type": "array",
+                  "description": "Advanced HTTP routing rules. When not specified, simple routing to service:port is used.",
                   "items": {
                     "type": "object",
+                    "description": "Istio HTTPRoute configuration",
                     "properties": {
-                      "key": {
-                        "type": "string"
-                      },
-                      "operator": {
-                        "type": "string",
-                        "enum": [
-                          "In",
-                          "NotIn",
-                          "Exists",
-                          "DoesNotExist"
-                        ]
-                      },
-                      "values": {
+                      "match": {
                         "type": "array",
                         "items": {
-                          "type": "string"
+                          "type": "object"
                         }
+                      },
+                      "route": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      },
+                      "redirect": {
+                        "type": "object"
+                      },
+                      "rewrite": {
+                        "type": "object"
+                      },
+                      "timeout": {
+                        "type": "string"
+                      },
+                      "retries": {
+                        "type": "object"
+                      },
+                      "fault": {
+                        "type": "object"
+                      },
+                      "mirror": {
+                        "type": "object"
+                      },
+                      "corsPolicy": {
+                        "type": "object"
+                      },
+                      "headers": {
+                        "type": "object"
                       }
                     }
                   }
                 }
               },
-              "additionalProperties": {
-                "type": "string"
-              }
-            },
-            "http": {
-              "type": "array",
-              "description": "Advanced HTTP routing rules. When not specified, simple routing to service:port is used.",
-              "items": {
-                "type": "object",
-                "description": "Istio HTTPRoute configuration",
-                "properties": {
-                  "match": {
-                    "type": "array",
-                    "items": {
-                      "type": "object"
+              "required": [
+                "enabled",
+                "gateways",
+                "hosts"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
                     }
                   },
-                  "route": {
-                    "type": "array",
-                    "items": {
-                      "type": "object"
-                    }
-                  },
-                  "redirect": {
-                    "type": "object"
-                  },
-                  "rewrite": {
-                    "type": "object"
-                  },
-                  "timeout": {
-                    "type": "string"
-                  },
-                  "retries": {
-                    "type": "object"
-                  },
-                  "fault": {
-                    "type": "object"
-                  },
-                  "mirror": {
-                    "type": "object"
-                  },
-                  "corsPolicy": {
-                    "type": "object"
-                  },
-                  "headers": {
-                    "type": "object"
+                  "then": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "http"
+                        ],
+                        "description": "Advanced routing with custom http configuration"
+                      },
+                      {
+                        "required": [
+                          "service",
+                          "port"
+                        ],
+                        "not": {
+                          "required": [
+                            "http"
+                          ]
+                        },
+                        "description": "Simple routing requires service and port when http is not provided"
+                      }
+                    ]
                   }
                 }
-              }
-            }
-          },
-          "required": [
-            "enabled",
-            "gateways",
-            "hosts"
-          ],
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "enabled": {
-                    "const": true
-                  }
-                }
-              },
-              "then": {
-                "anyOf": [
-                  {
-                    "required": [
-                      "http"
-                    ],
-                    "description": "Advanced routing with custom http configuration"
-                  },
-                  {
-                    "required": [
-                      "service",
-                      "port"
-                    ],
-                    "not": {
-                      "required": [
-                        "http"
-                      ]
-                    },
-                    "description": "Simple routing requires service and port when http is not provided"
-                  }
-                ]
-              }
-            }
-          ],
-          "additionalProperties": false
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
