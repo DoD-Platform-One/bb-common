@@ -60,6 +60,10 @@
     {{- end }}
   {{- end }}
 
+  {{- if dig "hbonePortInjection" "enabled" true $ctx.Values.networkPolicies }}
+    {{- $netpols = include "bb-common.network-policies.inject-hbone-ports" (list $netpols "ingress") | fromYamlArray }}
+  {{- end }}
+
   {{- if dig "ingress" "defaults" "enabled" true $ctx.Values.networkPolicies }} 
     {{- $netpols = concat $netpols (include "bb-common.network-policies.ingress.defaults.render" $ctx | fromYamlArray) }}
   {{- end }}

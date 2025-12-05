@@ -377,3 +377,20 @@ tests:
           path: metadata.annotations["helm.sh/hook-delete-policy"]
           value: hook-succeeded,before-hook-creation
 
+  - it: must create allow all inbound traffic from kubelet ip address when ambient and network policies are enabled
+    set:
+      istio.ambient.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: default-ingress-allow-ambient-kubelet
+    asserts:
+      - equal:
+          path: spec
+          value:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+            ingress:
+              - from:
+                - ipBlock:
+                    cidr: 169.254.7.127/32

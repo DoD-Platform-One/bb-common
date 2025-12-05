@@ -3,6 +3,11 @@ istio:
   # Enable/disable Istio integration
   enabled: false
 
+  # Ambient configuration for Istio
+  ambient:
+    # Enabled/disable creation of additional resources necessary for ambient mesh
+    enabled: false
+
   # Istio sidecar injection mode (enabled, disabled, or empty for no label)
   # injection: enabled
 
@@ -110,6 +115,12 @@ istio:
 networkPolicies:
   # Enable/disable the generation of NetworkPolicies
   enabled: false
+
+  # # HBONE port injection configuration
+  # hbonePortInjection:
+  #   # Enable/disable HBONE port (15008) injection into NetworkPolicy rules
+  #   # when ports are specified
+  #   enabled: true
 
   # # Prepend release name to all generated NetworkPolicy names
   # # Useful when deploying multiple releases in the same namespace

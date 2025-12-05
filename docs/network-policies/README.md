@@ -8,7 +8,6 @@ namespaces, and external resources.
 ## Table of Contents
 
 <!--toc:start-->
-
 - [Network Policies Documentation](#network-policies-documentation)
   - [Table of Contents](#table-of-contents)
   - [Quick Start](#quick-start)
@@ -31,6 +30,7 @@ namespaces, and external resources.
     - [Default Policies](#default-policies)
       - [Egress Defaults](#egress-defaults)
       - [Ingress Defaults](#ingress-defaults)
+        - [Default Policy Hook Creation](#default-policy-hook-creation)
   - [Built-in Definitions](#built-in-definitions)
     - [Egress Definitions](#egress-definitions)
     - [Ingress Definitions](#ingress-definitions)
@@ -52,11 +52,8 @@ namespaces, and external resources.
       - [Common Use Cases](#common-use-cases)
     - [Spec Literals](#spec-literals)
     - [Additional Policies](#additional-policies)
-    - [SPIFFE-based AuthorizationPolicies](#spiffe-based-authorizationpolicies)
-      - [Enabling AuthorizationPolicies](#enabling-authorizationpolicies)
-      - [How AuthorizationPolicy Generation Works](#how-authorizationpolicy-generation-works)
-      - [AuthorizationPolicy Examples](#authorizationpolicy-examples)
-      - [Important Notes](#important-notes)
+    - [Authorization Policy Generation](#authorization-policy-generation)
+    - [Automatic Istio HBONE Support](#automatic-istio-hbone-support)
   - [Labels and Annotations](#labels-and-annotations)
     - [Built-in Labels and Annotations](#built-in-labels-and-annotations)
     - [Customizing Labels and Annotations](#customizing-labels-and-annotations)
@@ -84,7 +81,6 @@ namespaces, and external resources.
       - [Combining with Default Policies](#combining-with-default-policies)
     - [Migration Strategy](#migration-strategy)
   - [Troubleshooting](#troubleshooting)
-
 <!--toc:end-->
 
 ## Quick Start
@@ -435,13 +431,13 @@ networkPolicies:
       enabled: true # Enable all defaults (this is the default)
       # Or control individually:
       denyAll:
-        enabled: true # Deny all egress by default
+        enabled: true  # Deny all egress by default
       allowInNamespace:
-        enabled: true # Allow egress within the same namespace
+        enabled: true  # Allow egress within the same namespace
       allowKubeDns:
-        enabled: true # Allow DNS resolution (TCP/UDP port 53)
+        enabled: true  # Allow DNS resolution (TCP/UDP port 53)
       allowIstiod:
-        enabled: true # Allow Istio control plane communication (TCP port 15012)
+        enabled: true  # Allow Istio control plane communication (TCP port 15012)
 ```
 
 #### Ingress Defaults
@@ -1146,6 +1142,21 @@ For comprehensive documentation on AuthorizationPolicy generation, including:
 - Configuration options
 
 See the [Authorization Policies documentation](../authorization-policies/README.md).
+
+### Automatic Istio HBONE Support
+
+When using Istio's Ambient Mesh mode, pods that are enrolled in the mesh without
+a sidecar must allow traffic on the HBONE port (15008) for proper functionality.
+
+By default, the network policy framework injects this port into all user-defined
+ingress and egress policies, enabling this traffic automatically. If you want
+to disable this behavior, you can set the following option:
+
+```yaml
+networkPolicies:
+  hbonePortInjection:
+    enabled: false # Disable automatic HBONE port injection
+```
 
 ## Labels and Annotations
 

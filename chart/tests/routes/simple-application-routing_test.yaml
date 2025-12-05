@@ -84,6 +84,23 @@ tests:
           path: spec.ingress[0].ports[0].port
           value: 8080
 
+  - it: must inject the hbone port into rule from ingress gateway when hbonePortInjection is enabled
+    set:
+      networkPolicies.hbonePortInjection.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-webapp-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 8080
+            - port: 15008
+              protocol: TCP
+      - equal:
+          path: metadata.labels["ambient.istio.network-policies.bigbang.dev/hbone-injected"]
+          value: "true"
+
   - it: should create an AuthorizationPolicy for webapp
     documentSelector:
       path: metadata.name

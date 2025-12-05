@@ -14,6 +14,10 @@
     {{- $netpols = append $netpols (include "bb-common.network-policies.ingress.defaults.allow-prometheus-to-istio-sidecar" $ctx | fromYaml) }}
   {{- end }}
 
+  {{- if dig "ambient" "enabled" false $ctx.Values.istio }}
+    {{- $netpols = append $netpols (include "bb-common.network-policies.ingress.defaults.allow-ambient-kubelet" $ctx | fromYaml) }}
+  {{- end }}
+
   {{- if dig "defaultsAsHooks" "enabled" false $ctx.Values.networkPolicies }}
     {{- $defaultHooks := dig "defaultsAsHooks" dict $ctx.Values.networkPolicies }}
     {{- $defaultHookTypes := list "pre-install" "pre-upgrade" "post-delete" }}
