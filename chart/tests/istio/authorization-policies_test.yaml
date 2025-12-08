@@ -35,7 +35,7 @@ tests:
       networkPolicies.ingress.to.myapp.from.k8s.admin-sa@admin/dashboard: true
     documentSelector:
       path: metadata.name
-      value: allow-ingress-to-myapp-any-port-from-ns-admin-pod-dashboard-with-identity-admin-sa
+      value: allow-ingress-to-myapp-any-port-from-ns-admin-with-identity-admin-sa
     asserts:
       - equal:
           path: spec
@@ -55,7 +55,7 @@ tests:
       networkPolicies.ingress.to.myapp:8443.from.k8s.admin-sa@admin/dashboard: true
     documentSelector:
       path: metadata.name
-      value: allow-ingress-to-myapp-tcp-port-8443-from-ns-admin-pod-dashboard-with-identity-admin-sa
+      value: allow-ingress-to-myapp-tcp-port-8443-from-ns-admin-with-identity-admin-sa
     asserts:
       - equal:
           path: spec
@@ -79,7 +79,7 @@ tests:
       networkPolicies.ingress.to.myapp:50000-50002.from.k8s.grpc-sa@services/grpc-client: true
     documentSelector:
       path: metadata.name
-      value: allow-ingress-to-myapp-tcp-ports-50000-thru-50002-from-ns-services-pod-grpc-client-with-identity-grpc-sa
+      value: allow-ingress-to-myapp-tcp-ports-50000-thru-50002-from-ns-services-with-identity-grpc-sa
     asserts:
       - equal:
           path: spec
@@ -282,3 +282,70 @@ tests:
               matchLabels:
                 app.kubernetes.io/name: myapp
 
+  - it: must create generated authorization policy with proper naming conventions and rules when no identity is specified
+    set:
+      istio:
+        authorizationPolicies:
+          enabled: true
+          generateFromNetpol: true
+      networkPolicies:
+        ingress:
+          to:
+            myapp:8080:
+              from:
+                k8s:
+                  foo/bar: true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-myapp-tcp-port-8080-from-ns-foo
+    asserts:
+      - equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      namespaces:
+                        - foo
+                to:
+                  - operation:
+                      ports:
+                        - "8080"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp
+
+  - it: must create generated authorization policy with proper naming conventions and rules when no identity is specified and all traffic is being allowed
+    set:
+      istio:
+        authorizationPolicies:
+          enabled: true
+          generateFromNetpol: true
+      networkPolicies:
+        ingress:
+          to:
+            myapp:8080:
+              from:
+                k8s:
+                  "*/*": true
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-myapp-tcp-port-8080-from-ns-any
+    asserts:
+      - equal:
+          path: spec
+          value:
+            action: ALLOW
+            rules:
+              - from:
+                  - source:
+                      namespaces:
+                        - '*'
+                to:
+                  - operation:
+                      ports:
+                        - "8080"
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: myapp

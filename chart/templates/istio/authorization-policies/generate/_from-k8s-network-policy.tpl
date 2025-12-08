@@ -7,7 +7,9 @@
   {{- $labels := index . 5 }}
   {{- $annotations := index . 6 }}
   {{- $local := index . 7 }}
-  
+  {{- $netpolNameParts := split "-from" $netpol.metadata.name }}
+  {{- $netpolPrefix := $netpolNameParts._0 }}
+
   {{- $remote := include "bb-common.network-policies.ingress.parse.k8s-remote-key" $ruleKey | fromYaml }}
 
   {{- $authzPolicy := dict }}
@@ -15,13 +17,18 @@
   {{- $_ := set $authzPolicy "kind" "AuthorizationPolicy" }}
 
   {{- if $remote.identity }}
-    {{- /* Use the NetworkPolicy name and just append the identity */}}
-    {{- $name = printf "%s-with-identity-%s" $netpol.metadata.name $remote.identity }}
+    {{- /* Use the partial NetworkPolicy name and just append namespace and identity */}}
+    {{- $name = printf "%s-from-ns-%s-with-identity-%s" $netpolPrefix $remote.namespace $remote.identity }}
     {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/from-spiffe" $ruleKey }}
     {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/identity" $remote.identity }}
   {{- else }}
-    {{- /* Use the NetworkPolicy name and append namespace */}}
-    {{- $name = printf "%s-from-ns-%s" $netpol.metadata.name $remote.namespace }}
+    {{- if eq $remote.namespace "*" }}
+      {{- /* Use the partial NetworkPolicy name with any as namespace to avoid invalid characters in name */}}
+      {{- $name = printf "%s-from-ns-any" $netpolPrefix }}
+    {{- else }}
+      {{- /* Use the partial NetworkPolicy name and append namespace */}}
+      {{- $name = printf "%s-from-ns-%s" $netpolPrefix $remote.namespace }}
+    {{- end }}
     {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/from-namespace" $ruleKey }}
     {{- if $remote.pod }}
       {{- $_ := set $annotations "generated.authorization-policies.bigbang.dev/pod" $remote.pod }}
