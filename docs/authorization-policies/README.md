@@ -85,7 +85,7 @@ Generates both:
 
 1. NetworkPolicy: `allow-ingress-to-database-any-port-from-ns-backend-pod-app`
 2. AuthorizationPolicy:
-   `allow-ingress-to-database-any-port-from-ns-backend-pod-app-with-identity-app-sa`
+   `allow-ingress-to-database-any-port-from-ns-backend-with-identity-app-sa`
    - Enforces SPIFFE identity: `cluster.local/ns/backend/sa/app-sa`
 
 #### For Kubernetes Rules without Identity
@@ -108,7 +108,7 @@ networkPolicies:
 Generates both:
 
 1. NetworkPolicy: `allow-ingress-to-api-any-port-from-ns-backend-pod-worker`
-2. AuthorizationPolicy: `allow-ingress-to-api-any-port-from-ns-backend-pod-worker-from-ns-backend`
+2. AuthorizationPolicy: `allow-ingress-to-api-any-port-from-ns-backend`
    - Allows traffic from namespace: `backend`
 
 #### For CIDR Rules
@@ -156,11 +156,11 @@ istio:
 
 When enabled, BB-Common creates two default authorization policies:
 
-#### 1. Deny All (`allow-nothing`)
+#### 1. Deny All (`default-authz-allow-nothing`)
 
 A default-deny policy with an empty spec that blocks all traffic unless explicitly allowed.
 
-**Policy Name**: `{{ .Release.Name }}-allow-nothing`
+**Policy Name**: `{{ .Release.Name }}-default-authz-allow-nothing`
 
 #### 2. Allow Intra-Namespace (`default-authz-allow-all-in-ns`)
 

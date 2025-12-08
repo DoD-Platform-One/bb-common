@@ -25,13 +25,13 @@ tests:
           count: 3
       - documentSelector:
           path: metadata.name
-          value: allow-nothing
+          value: default-authz-allow-nothing
         equal:
           path: kind
           value: AuthorizationPolicy
       - documentSelector:
           path: metadata.name
-          value: allow-nothing
+          value: default-authz-allow-nothing
         equal:
           path: spec
           value: {}
