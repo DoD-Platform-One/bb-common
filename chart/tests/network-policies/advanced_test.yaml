@@ -7,7 +7,6 @@ release:
   namespace: test
 set:
   networkPolicies.enabled: true
-  networkPolicies.hbonePortInjection.enabled: false
   networkPolicies.ingress.defaults.enabled: false
   networkPolicies.egress.defaults.enabled: false
 tests:
