@@ -44,7 +44,7 @@
     {{- end }}
   {{- end }}
 
-  {{- if dig "hbonePortInjection" "enabled" true $ctx.Values.networkPolicies }}
+  {{- if dig "hbonePortInjection" "enabled" false $ctx.Values.networkPolicies }}
     {{- $netpols = include "bb-common.network-policies.inject-hbone-ports" (list $netpols "egress") | fromYamlArray }}
   {{- end }}
 

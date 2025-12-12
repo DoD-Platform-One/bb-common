@@ -7,8 +7,6 @@ release:
 set:
   networkPolicies:
     enabled: true
-    hbonePortInjection:
-      enabled: false
     ingress:
       defaults:
         enabled: false

@@ -3,6 +3,32 @@ suite: bb-common.network-policies.inject-hbone-ports
 templates:
   - templates/utils/self-test.yaml
 tests:
+  - it: must not inject hbone if there are no k8s remotes in the rule
+    set:
+      selfTest:
+        bb-common.network-policies.inject-hbone-ports:
+          resultIsYaml: true
+          args:
+          - - spec:
+                ingress:
+                - from:
+                  - ipBlock:
+                      cidr: 0.0.0.0/0
+                  ports:
+                  - port: 80
+                    protocol: TCP
+          - "ingress"
+    asserts:
+      - notContains:
+          path: result[0].metadata.labels
+          content: 
+            ambient.istio.network-policies.bigbang.dev/hbone-injected: "true"
+      - equal:
+          path: result[0].spec.ingress[0].ports
+          value:
+          - port: 80
+            protocol: TCP
+        
   - it: must inject hbone and set a label if the netpol rule had ports but not hbone
     set:
       selfTest:

@@ -7,6 +7,8 @@
     "protocol" "TCP"
   }}
 
+  {{- $verb := ternary "from" "to" (eq $direction "ingress") }}
+
   {{- range $netpol := $netpols }}
     {{- $rules := dig "spec" $direction false $netpol }}
 
@@ -18,6 +20,19 @@
       {{- if or (not (hasKey $rule "ports")) (empty $rule.ports) }}
         {{- continue }}
       {{- end }}
+
+      {{- $hasK8sRemote := false }}
+      {{- range $remote := dig $verb list $rule }}
+        {{- if or (hasKey $remote "namespaceSelector") (hasKey $remote "podSelector") }}
+          {{- $hasK8sRemote = true }}
+          {{- break }}
+        {{- end }}
+      {{- end }}
+
+      {{- if not $hasK8sRemote }}
+        {{- continue }}
+      {{- end }}
+
       {{- $hasHBonePort := false }}
 
       {{- range $port := $rule.ports }}
