@@ -56,6 +56,8 @@ Simplified configuration for Istio VirtualServices and traffic routing:
   gateways
 - **Traffic Management**: Declare routing rules with minimal boilerplate
 
+> **Note**: Routes require Istio CRDs (`networking.istio.io/v1`) to be available in the cluster. Routes are conditionally rendered only when Istio CRDs are available.
+
 [Learn more about routes →](docs/routes/README.md)
 
 ## Installation

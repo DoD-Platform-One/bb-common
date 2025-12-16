@@ -91,19 +91,21 @@ graph TB
 ```mermaid
 graph TB
     C[istio] --> C1[authorizationPolicies]
-    C --> C2[hardened]
+    C --> C2[sidecar]
     C --> C3[mtls]
+    C --> C4[serviceEntries]
 
     C1 --> C1A[AuthorizationPolicy:<br/>allow-nothing]
     C1 --> C1B[AuthorizationPolicy:<br/>allow-in-ns]
     C1 --> C1C[AuthorizationPolicy:<br/>additional]
     C1 --> C1D[AuthorizationPolicy:<br/>from-netpol]
+    C1 --> C1E[AuthorizationPolicy:<br/>custom]
 
     C2 --> C2A[Sidecar]
-    C2 --> C2C[AuthorizationPolicy:<br/>custom]
-    C2 --> C2D[ServiceEntry:<br/>custom]
 
     C3 --> C3A[PeerAuthentication]
+
+    C4 --> C4A[ServiceEntry:<br/>custom]
 
     %% Styling
     classDef configKeys fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:black;
@@ -112,7 +114,7 @@ graph TB
     classDef defaults fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:black;
 
     class C configKeys;
-    class C1,C2,C3 subKeys;
+    class C1,C2,C3,C4 subKeys;
     class C1A,C1B,C2A,C3A defaults;
-    class C1C,C1D,C2B,C2C,C2D resources;
+    class C1C,C1D,C1E,C4A resources;
 ```
