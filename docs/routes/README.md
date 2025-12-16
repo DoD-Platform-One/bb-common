@@ -11,6 +11,7 @@ ingress traffic routing.
 - [Routes Documentation](#routes-documentation)
   - [Table of Contents](#table-of-contents)
   - [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
   - [Generated Resources](#generated-resources)
     - [VirtualService](#virtualservice)
     - [ServiceEntry](#serviceentry)
@@ -69,6 +70,20 @@ service mesh integration.
 **Optional:**
 
 - `selector`: Pod selector labels - if omitted, defaults to `app.kubernetes.io/name: {route-key}`. NetworkPolicy and AuthorizationPolicy are automatically generated using this selector for enhanced security
+
+## Prerequisites
+
+> **Important**: Routes are **conditionally rendered** based on the availability of Istio Custom Resource Definitions (CRDs) in your cluster.
+
+Routes requires the Istio CRDs to be installed in your Kubernetes cluster. Specifically, routes will only be rendered when the `networking.istio.io/v1` API version is available.
+
+**To verify Istio CRDs are available:**
+
+```bash
+kubectl api-versions | grep networking.istio.io/v1
+```
+
+You should see `networking.istio.io/v1` in the output. If you don't see this, you need to install Istio before routes can be generated.
 
 ## Generated Resources
 
