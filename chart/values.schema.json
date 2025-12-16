@@ -289,7 +289,7 @@
             "enabled": {
               "type": "boolean",
               "description": "Enable/disable HBONE port (15008) injection into NetworkPolicy rules when ports are specified",
-              "default": true
+              "default": false
             }
           }
         },

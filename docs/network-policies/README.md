@@ -1508,6 +1508,10 @@ networkPolicies:
             0.0.0.0/0:443: true # Metadata endpoint blocked automatically
 ```
 
+> **Note**: If the user-provided CIDR **is** the excluded CIDR (e.g., wanting to
+> explicitly allow access to just the metadata endpoint), the framework will not
+> apply the exception.
+
 ##### Overriding the excluded CIDRs
 
 This metadata endpoint exclusion is configurable. If you need to override it,

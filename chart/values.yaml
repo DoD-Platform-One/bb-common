@@ -120,7 +120,7 @@ networkPolicies:
   # hbonePortInjection:
   #   # Enable/disable HBONE port (15008) injection into NetworkPolicy rules
   #   # when ports are specified
-  #   enabled: true
+  #   enabled: false
 
   # # Prepend release name to all generated NetworkPolicy names
   # # Useful when deploying multiple releases in the same namespace

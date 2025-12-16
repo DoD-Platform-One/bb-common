@@ -22,6 +22,9 @@
   {{- $exclusions := dig "egress" "excludeCIDRs" (list "169.254.169.254/32") $ctx.Values.networkPolicies }}
   {{- $except := list }}
   {{- range $exclusion := $exclusions }}
+    {{- if eq $exclusion $remote.cidr }}
+      {{- continue }}
+    {{- end }}
     {{- if eq "true" (include "bb-common.utils.cidr-contains" (list $remote.cidr $exclusion)) }}
       {{- $except = append $except $exclusion }}
     {{- end }}
