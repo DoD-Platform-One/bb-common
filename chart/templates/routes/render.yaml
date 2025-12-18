@@ -1,1 +1,1 @@
-{{- include "bb-common.routes.render" $ }}
+{{- include "bb-common.routes.render" . }}

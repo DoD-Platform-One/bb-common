@@ -35,7 +35,7 @@ tests:
   - it: should create a ServiceEntry for webapp
     documentSelector:
       path: metadata.name
-      value: webapp-service-entry
+      value: webapp-internal
     asserts:
       - equal:
           path: kind

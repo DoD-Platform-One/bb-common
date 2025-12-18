@@ -1,14 +1,14 @@
-{{- define "bb-common.routes.service-entry" }}
+{{- define "bb-common.routes.inbound.service-entry" }}
   {{- $ctx := index . 0 }}
   {{- $name := index . 1 }}
   {{- $route := index . 2 }}
 
   {{- /* Build ServiceEntry resource */}}
   {{- $se := dict }}
-  {{- $_ := set $se "apiVersion" "networking.istio.io/v1beta1" }}
+  {{- $_ := set $se "apiVersion" "networking.istio.io/v1" }}
   {{- $_ := set $se "kind" "ServiceEntry" }}
 
-  {{- $metadata := dict "name" (printf "%s-service-entry" $name) "namespace" $ctx.Release.Namespace }}
+  {{- $metadata := dict "name" (printf "%s-internal" $name) "namespace" $ctx.Release.Namespace }}
   {{- if $route.metadata }}
     {{- if $route.metadata.labels }}
       {{- $_ := set $metadata "labels" $route.metadata.labels }}

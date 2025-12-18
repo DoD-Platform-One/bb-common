@@ -10,20 +10,31 @@ ingress traffic routing.
 
 - [Routes Documentation](#routes-documentation)
   - [Table of Contents](#table-of-contents)
-  - [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Generated Resources](#generated-resources)
-    - [VirtualService](#virtualservice)
-    - [ServiceEntry](#serviceentry)
-    - [NetworkPolicy](#networkpolicy)
-    - [AuthorizationPolicy](#authorizationpolicy)
-  - [Automatic Selector Inference](#automatic-selector-inference)
+  - [Overview](#overview)
+  - [Inbound Routes](#inbound-routes)
+    - [Quick Start](#quick-start)
+    - [Generated Resources](#generated-resources)
+      - [VirtualService](#virtualservice)
+      - [ServiceEntry](#serviceentry)
+      - [NetworkPolicy](#networkpolicy)
+      - [AuthorizationPolicy](#authorizationpolicy)
+    - [Automatic Selector Inference](#automatic-selector-inference)
+  - [Outbound Routes](#outbound-routes)
+    - [Quick Start](#quick-start-1)
+    - [Generated Resources](#generated-resources-1)
+      - [ServiceEntry](#serviceentry-1)
+    - [Configuration Options](#configuration-options)
   - [Examples](#examples)
-    - [Simple Application Routing](#simple-application-routing)
-    - [Multiple Services](#multiple-services)
-    - [Advanced HTTP Rules](#advanced-http-rules)
-    - [Custom Gateway Configuration](#custom-gateway-configuration)
-    - [Labels and Annotations](#labels-and-annotations)
+    - [Inbound Examples](#inbound-examples)
+      - [Simple Application Routing](#simple-application-routing)
+      - [Multiple Services](#multiple-services)
+      - [Advanced HTTP Rules](#advanced-http-rules)
+      - [Custom Gateway Configuration](#custom-gateway-configuration)
+      - [Labels and Annotations](#labels-and-annotations)
+    - [Outbound Examples](#outbound-examples)
+      - [Basic Outbound Route](#basic-outbound-route)
+      - [Custom Ports and Protocols](#custom-ports-and-protocols)
+      - [Mesh Internal Services](#mesh-internal-services)
   - [Migration Guide](#migration-guide)
     - [Migrating from Legacy Istio VirtualServices](#migrating-from-legacy-istio-virtualservices)
     - [Files to Remove](#files-to-remove)
@@ -33,9 +44,20 @@ ingress traffic routing.
 
 <!--toc:end-->
 
-## Quick Start
+## Overview
 
-Routes are configured under the `routes.inbound` key in your values file. Here's a basic configuration that creates a secure route with network policies:
+The routes framework provides two types of routing configurations:
+
+- **Inbound Routes** (`routes.inbound`): Configure ingress traffic routing through Istio gateways to services within your mesh, with automatic security policy generation
+- **Outbound Routes** (`routes.outbound`): Register external services for egress traffic, enabling REGISTRY_ONLY outbound traffic policies
+
+## Inbound Routes
+
+Inbound routes handle incoming traffic to your applications through Istio gateways.
+
+### Quick Start
+
+Inbound routes are configured under the `routes.inbound` key in your values file. Here's a basic configuration that creates a secure route with network policies:
 
 ```yaml
 routes:
@@ -89,15 +111,15 @@ You should see `networking.istio.io/v1` in the output. If you don't see this, yo
 
 The routes framework automatically generates multiple Kubernetes resources to provide complete ingress routing functionality. Each enabled route creates a **VirtualService** for traffic routing and a **ServiceEntry** for internal service mesh communication. Additional **NetworkPolicy** and **AuthorizationPolicy** resources are automatically created to secure access to the target service using either an explicit selector or the default `app.kubernetes.io/name: {route-key}` selector.
 
-For a visual representation of how these resources relate to each other, see the [Resource Graph](../RESOURCE-GRAPH.md).
+For a visual representation of how these resources relate to each other, see the [Resource Graph](../RESOURCE_GRAPH.md).
 
-### VirtualService
+#### VirtualService
 
 A Kubernetes VirtualService is created for each enabled route:
 
 ```yaml
 # Generated from basic route configuration
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: my-app
@@ -115,18 +137,18 @@ spec:
               number: 8080
 ```
 
-### ServiceEntry
+#### ServiceEntry
 
-A ServiceEntry is created to register external services in the service mesh registry.
+A ServiceEntry is created to register the inbound route hosts in the service mesh registry.
 This is essential when using REGISTRY_ONLY outbound traffic policies, allowing
 the mesh to route traffic to external hosts defined in the VirtualService:
 
 ```yaml
 # Generated for service mesh registry entry
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
-  name: my-app-service-entry
+  name: my-app-internal
   namespace: default
 spec:
   hosts:
@@ -143,7 +165,7 @@ spec:
 > `outboundTrafficPolicy.mode` set to `REGISTRY_ONLY`, where only explicitly
 > registered external services are allowed.
 
-### NetworkPolicy
+#### NetworkPolicy
 
 A NetworkPolicy is automatically generated to allow ingress gateway access:
 
@@ -174,7 +196,7 @@ spec:
           protocol: TCP
 ```
 
-### AuthorizationPolicy
+#### AuthorizationPolicy
 
 An AuthorizationPolicy is also automatically created for allowing gateway access to the application pod:
 
@@ -199,7 +221,7 @@ spec:
               - cluster.local/ns/istio-gateway/sa/public-ingressgateway-ingressgateway-service-account
 ```
 
-## Automatic Selector Inference
+### Automatic Selector Inference
 
 When no `selector` is explicitly provided in the route configuration, the system automatically infers one using the Kubernetes standard labeling convention:
 
@@ -229,39 +251,207 @@ routes:
 
 This ensures that NetworkPolicy and AuthorizationPolicy resources are always created, even when selectors are not explicitly specified. You can override this behavior by providing an explicit `selector` configuration.
 
+## Outbound Routes
+
+Outbound routes register external services in the Istio service mesh, enabling controlled egress traffic. This is particularly important when using `outboundTrafficPolicy.mode: REGISTRY_ONLY`, where only explicitly registered external services are accessible.
+
+### Quick Start
+
+Outbound routes are configured under the `routes.outbound` key in your values file:
+
+```yaml
+routes:
+  outbound:
+    google:
+      enabled: true
+      hosts:
+        - www.google.com
+      ports:
+        - number: 443
+          name: https
+          protocol: HTTPS
+```
+
+This creates a ServiceEntry that allows pods in the mesh to communicate with `www.google.com` on port 443.
+
+**Required fields:**
+
+- `enabled`: Must be `true` to generate resources
+- `hosts`: List of external hostnames to register
+
+**Optional:**
+
+- `ports`: List of port configurations (defaults to HTTPS/443 if omitted)
+- `location`: Service location - `MESH_EXTERNAL` (default) or `MESH_INTERNAL`
+- `resolution`: DNS resolution strategy - `DNS` (default), `STATIC`, `DNS_ROUND_ROBIN`, `DYNAMIC_DNS`, or `NONE`
+- `metadata`: Custom labels and annotations for the generated ServiceEntry
+
+### Generated Resources
+
+#### ServiceEntry
+
+A ServiceEntry resource is created for each enabled outbound route:
+
+```yaml
+# Generated from outbound route configuration
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: google-external
+  namespace: default
+  labels:
+    service-entries.bigbang.dev/source: bb-common
+  annotations:
+    outbound.service-entries.generated.bigbang.dev/from-route-name: google
+spec:
+  hosts:
+    - www.google.com
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+    - name: https
+      number: 443
+      protocol: HTTPS
+```
+
+> **Note**: The ServiceEntry name is automatically suffixed with `-external` or `-internal` based on the `location` setting.
+
+### Configuration Options
+
+**Location**
+
+- `MESH_EXTERNAL` (default): Service is external to the mesh
+- `MESH_INTERNAL`: Service is internal to the mesh
+
+**Resolution**
+
+- `DNS` (default): Use DNS for service discovery
+- `STATIC`: Use static IP addresses from the service entry
+- `DNS_ROUND_ROBIN`: DNS-based round-robin load balancing
+- `DYNAMIC_DNS`: Dynamically resolve DNS
+- `NONE`: No resolution - use the address as-is
+
+**Ports**
+
+If no ports are specified, defaults to HTTPS/443. When specifying ports, all three fields are required:
+
+```yaml
+ports:
+  - number: 443      # Port number (can be templated string or integer)
+    name: https      # Port name
+    protocol: HTTPS  # Protocol (HTTP, HTTPS, TCP, etc.)
+```
+
 ## Examples
 
-### Simple Application Routing
+### Inbound Examples
+
+#### Simple Application Routing
 
 Basic web application exposed through a gateway:
 
 See [routes-simple-application-routing.yaml](../../chart/tests/routes/values/routes-simple-application-routing.yaml) for the complete configuration.
 
-### Multiple Services
+#### Multiple Services
 
 Multiple services with different routing configurations:
 
 See [routes-multiple-services.yaml](../../chart/tests/routes/values/routes-multiple-services.yaml) for the complete configuration.
 
-### Advanced HTTP Rules
+#### Advanced HTTP Rules
 
 Custom routing with path-based rules:
 
 See [routes-advanced-http-rules.yaml](../../chart/tests/routes/values/routes-advanced-http-rules.yaml) for the complete configuration.
 
-### Custom Gateway Configuration
+#### Custom Gateway Configuration
 
 Using different gateways for external and internal services:
 
 See [routes-custom-gateway-configuration.yaml](../../chart/tests/routes/values/routes-custom-gateway-configuration.yaml) for the complete configuration.
 
-### Labels and Annotations
+#### Labels and Annotations
 
 Apply custom labels and annotations to all generated resources using the metadata structure:
 
 See [routes-labels-and-annotations.yaml](../../chart/tests/routes/values/routes-labels-and-annotations.yaml) for the complete configuration.
 
 > **Note**: Custom labels and annotations specified in the route metadata configuration are applied to all generated resources (VirtualService, ServiceEntry, NetworkPolicy, and AuthorizationPolicy).
+
+### Outbound Examples
+
+#### Basic Outbound Route
+
+Allow access to external services with default HTTPS configuration:
+
+```yaml
+routes:
+  outbound:
+    google:
+      enabled: true
+      hosts:
+        - www.google.com
+        - google.com
+    
+    github:
+      enabled: true
+      hosts:
+        - api.github.com
+        - github.com
+```
+
+#### Custom Ports and Protocols
+
+Define specific ports and protocols for external services:
+
+```yaml
+routes:
+  outbound:
+    database:
+      enabled: true
+      hosts:
+        - db.example.com
+      ports:
+        - number: 5432
+          name: postgres
+          protocol: TCP
+        - number: 5433
+          name: postgres-replica
+          protocol: TCP
+    
+    api-service:
+      enabled: true
+      hosts:
+        - api.example.com
+      ports:
+        - number: 80
+          name: http
+          protocol: HTTP
+        - number: 443
+          name: https
+          protocol: HTTPS
+```
+
+#### Mesh Internal Services
+
+Register services internal to the mesh with custom resolution:
+
+```yaml
+routes:
+  outbound:
+    internal-service:
+      enabled: true
+      hosts:
+        - internal.service.local
+      location: MESH_INTERNAL
+      resolution: NONE
+      metadata:
+        labels:
+          environment: production
+          team: platform
+        annotations:
+          description: "Internal service for cross-namespace communication"
+```
 
 ## Migration Guide
 
@@ -317,6 +507,21 @@ istio:
     service: my-alertmanager-service
     port: 9093
     namespace: monitoring
+
+  hardened:
+    enabled: true
+    customServiceEntries:
+    - name: "allow-google"
+      enabled: true
+      spec:
+        hosts:
+          - google.com
+        location: MESH_EXTERNAL
+        ports:
+          - number: 443
+            protocol: TLS
+            name: https
+        resolution: DNS
 ```
 
 **New Routes Configuration:**
@@ -345,4 +550,9 @@ routes:
       port: "{{ .Values.alertmanager.service.port }}"
       selector:
         app.kubernetes.io/name: alertmanager
+  outbound:
+    google:
+      enabled: true
+      hosts:
+        - google.com
 ```

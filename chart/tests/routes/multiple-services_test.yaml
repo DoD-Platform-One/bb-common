@@ -119,7 +119,7 @@ tests:
   - it: should create a ServiceEntry for frontend
     documentSelector:
       path: metadata.name
-      value: frontend-service-entry
+      value: frontend-internal
     asserts:
       - equal:
           path: kind
@@ -131,7 +131,7 @@ tests:
   - it: should create a ServiceEntry for api
     documentSelector:
       path: metadata.name
-      value: api-service-entry
+      value: api-internal
     asserts:
       - equal:
           path: kind
@@ -143,7 +143,7 @@ tests:
   - it: should create a ServiceEntry for admin
     documentSelector:
       path: metadata.name
-      value: admin-service-entry
+      value: admin-internal
     asserts:
       - equal:
           path: kind

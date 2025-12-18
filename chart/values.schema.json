@@ -1053,6 +1053,112 @@
       "type": "object",
       "description": "Istio VirtualService and gateway configuration for routing traffic to applications",
       "properties": {
+        "outbound": {
+          "type": "object",
+          "description": "Outbound routes configuration",
+          "patternProperties": {
+            "^[a-zA-Z0-9][a-zA-Z0-9_-]*$": {
+              "type": "object",
+              "description": "Named route configuration",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable this route",
+                  "default": true
+                },
+                "hosts": {
+                  "type": "array",
+                  "description": "List of host/domain names for this route. Supports templating.",
+                  "items": {
+                    "type": "string",
+                    "description": "Hostname or domain. Can use Helm templating (e.g., '{{ .Values.domain }}')"
+                  },
+                  "minItems": 1
+                },
+                "location": {
+                  "type": "string",
+                  "description": "Location to expose the route (e.g., MESH_EXTERNAL, MESH_INTERNAL)",
+                  "enum": [
+                    "MESH_EXTERNAL",
+                    "MESH_INTERNAL"
+                  ],
+                  "default": "MESH_EXTERNAL"
+                },
+                "resolution": {
+                  "type": "string",
+                  "description": "DNS resolution strategy for the route",
+                  "enum": [
+                    "DNS",
+                    "STATIC",
+                    "DNS_ROUND_ROBIN",
+                    "DYNAMIC_DNS",
+                    "NONE"
+                  ],
+                  "default": "DNS"
+                },
+                "metadata": {
+                  "type": "object",
+                  "description": "Metadata applied to all generated resources",
+                  "properties": {
+                    "labels": {
+                      "type": "object",
+                      "description": "Additional labels for all generated resources",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "annotations": {
+                      "type": "object",
+                      "description": "Additional annotations for all generated resources",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "ports": {
+                  "type": "array",
+                  "description": "List of ports to expose for this route",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "number": {
+                        "oneOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Port number"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Port name"
+                      },
+                      "protocol": {
+                        "type": "string",
+                        "description": "Port protocol (e.g., HTTP, HTTPS, TCP)"
+                      }
+                    },
+                    "required": [
+                      "number",
+                      "name",
+                      "protocol"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "enabled",
+                "hosts"
+              ]
+            }
+          }
+        },
         "inbound": {
           "type": "object",
           "description": "Inbound routes configuration",
