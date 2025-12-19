@@ -41,7 +41,7 @@ tests:
   - it: should create a ServiceEntry with custom labels and annotations
     documentSelector:
       path: metadata.name
-      value: labeled-app-service-entry
+      value: labeled-app-internal
     asserts:
       - equal:
           path: kind

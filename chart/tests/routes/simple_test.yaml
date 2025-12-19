@@ -64,7 +64,7 @@ tests:
   - it: should create a ServiceEntry for external hosts
     documentSelector:
       path: metadata.name
-      value: prometheus-service-entry
+      value: prometheus-internal
     asserts:
       - equal:
           path: spec.hosts[0]

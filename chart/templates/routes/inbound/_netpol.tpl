@@ -1,4 +1,4 @@
-{{- define "bb-common.routes.netpol" }}
+{{- define "bb-common.routes.inbound.netpol" }}
   {{- $ctx := index . 0 }}
   {{- $name := index . 1 }}
   {{- $route := index . 2 }}

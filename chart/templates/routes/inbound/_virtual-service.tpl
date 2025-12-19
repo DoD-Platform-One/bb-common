@@ -1,4 +1,4 @@
-{{- define "bb-common.routes.virtual-service" }}
+{{- define "bb-common.routes.inbound.virtual-service" }}
   {{- $ctx := index . 0 }}
   {{- $name := index . 1 }}
   {{- $route := index . 2 }}
@@ -12,7 +12,7 @@
   {{- $_ := set $vs "apiVersion" "networking.istio.io/v1" }}
   {{- $_ := set $vs "kind" "VirtualService" }}
 
-  {{- $metadata := dict "name" (printf "%s" $name) "namespace" $ctx.Release.Namespace }}
+  {{- $metadata := dict "name" $name "namespace" $ctx.Release.Namespace }}
   {{- if $route.metadata }}
     {{- if $route.metadata.labels }}
       {{- $_ := set $metadata "labels" $route.metadata.labels }}

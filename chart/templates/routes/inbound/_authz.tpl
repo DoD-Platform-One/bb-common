@@ -1,4 +1,4 @@
-{{- define "bb-common.routes.authz" }}
+{{- define "bb-common.routes.inbound.authz" }}
   {{- $ctx := index . 0 }}
   {{- $name := index . 1 }}
   {{- $route := index . 2 }}

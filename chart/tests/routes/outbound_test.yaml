@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes - Outbound
+templates:
+  - templates/routes/render.yaml
+set:
+  routes:
+    outbound:
+      google:
+        enabled: true
+        hosts:
+        - www.google.com
+        ports:
+        - number: 443
+          name: https
+          protocol: HTTPS
+      microsoft:
+        enabled: true
+        hosts:
+        - www.microsoft.com
+      github:
+        enabled: false
+        hosts:
+        - www.github.com
+      docker:
+        enabled: true
+        hosts:
+        - www.docker.com
+        metadata:
+          labels:
+            custom-label: custom-value
+          annotations:
+            custom-annotation: custom-annotation-value
+        location: MESH_INTERNAL
+        resolution: NONE
+
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
+tests:
+- it: should create a `ServiceEntry` for outbound google route
+  documentSelector:
+    path: metadata.name
+    value: google-external
+  asserts:
+  - equal:
+      path: spec
+      value:
+        hosts:
+        - www.google.com
+        ports:
+        - number: 443
+          name: https
+          protocol: HTTPS
+        location: MESH_EXTERNAL
+        resolution: DNS
+- it: should label the `ServiceEntry` for outbound google route
+  documentSelector:
+    path: metadata.name
+    value: google-external
+  asserts:
+  - equal:
+      path: metadata.labels
+      value:
+        service-entries.bigbang.dev/source: bb-common
+- it: should annotate the `ServiceEntry` for outbound google route
+  documentSelector:
+    path: metadata.name
+    value: google-external
+  asserts:
+  - equal:
+      path: metadata.annotations
+      value:
+        outbound.service-entries.generated.bigbang.dev/from-route-name: google
+- it: should create a `ServiceEntry` for outbound microsoft route with default port
+  documentSelector:
+    path: metadata.name
+    value: microsoft-external
+  asserts:
+  - equal:
+      path: spec.ports
+      value:
+      - number: 443
+        name: https
+        protocol: HTTPS
+- it: should not create a `ServiceEntry` for disabled outbound github route
+  asserts:
+  - hasDocuments:
+      count: 3  # Only google, microsoft, and docker ServiceEntries should be created
+- it: should create a `ServiceEntry` for outbound docker route with custom labels and annotations
+  documentSelector:
+    path: metadata.name
+    value: docker-internal
+  asserts:
+  - equal: 
+      path: metadata.labels.custom-label
+      value: custom-value
+  - equal: 
+      path: metadata.annotations.custom-annotation
+      value: custom-annotation-value
+- it: should create a `ServiceEntry` for outbound docker route with custom location and resolution
+  documentSelector:
+    path: metadata.name
+    value: docker-internal
+  asserts:
+  - equal:
+      path: spec.location
+      value: MESH_INTERNAL
+  - equal:
+      path: spec.resolution
+      value: NONE

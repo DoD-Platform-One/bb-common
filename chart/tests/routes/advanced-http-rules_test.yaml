@@ -48,7 +48,7 @@ tests:
   - it: should create a ServiceEntry for api-routing
     documentSelector:
       path: metadata.name
-      value: api-routing-service-entry
+      value: api-routing-internal
     asserts:
       - equal:
           path: kind

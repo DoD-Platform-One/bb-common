@@ -52,7 +52,7 @@ tests:
   - it: should create a ServiceEntry for public-api without custom labels
     documentSelector:
       path: metadata.name
-      value: public-api-service-entry
+      value: public-api-internal
     asserts:
       - equal:
           path: kind
