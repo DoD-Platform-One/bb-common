@@ -14,7 +14,7 @@
     {{- $netpols = append $netpols (include "bb-common.network-policies.ingress.defaults.allow-prometheus-to-istio-sidecar" $ctx | fromYaml) }}
   {{- end }}
 
-  {{- if dig "ambient" "enabled" false $ctx.Values.istio }}
+  {{- if dig "ambient" "enabled" false ($ctx.Values.istio | default dict) }}
     {{- $netpols = append $netpols (include "bb-common.network-policies.ingress.defaults.allow-ambient-kubelet" $ctx | fromYaml) }}
   {{- end }}
 
