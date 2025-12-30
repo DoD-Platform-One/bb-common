@@ -394,3 +394,11 @@ tests:
               - from:
                 - ipBlock:
                     cidr: 169.254.7.127/32
+
+  - it: Should not error out when istio section does not exist
+    values: []
+    set:
+      networkPolicies.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
