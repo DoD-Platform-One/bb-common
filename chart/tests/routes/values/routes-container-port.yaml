@@ -1,0 +1,17 @@
+test: "foo"
+domain: "bigbang.mil"
+routes:
+  inbound:
+    loki:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - loki.{{ .Values.domain }}
+      service: logging-loki-gateway.logging.svc.cluster.local
+      # Service port - used for VirtualService
+      port: 80
+      # Container port - used for NetworkPolicy
+      containerPort: 8080
+      selector:
+        app.kubernetes.io/name: logging-loki

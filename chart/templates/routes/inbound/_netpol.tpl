@@ -14,8 +14,12 @@
 
 
   {{- $portSuffix := "any-port" }}
-  {{- if $route.port }}
-    {{- $portSuffix = toString $route.port }}
+  {{- $netpolPort := $route.port }}
+  {{- if $route.containerPort }}
+    {{- $netpolPort = $route.containerPort }}
+  {{- end }}
+  {{- if $netpolPort }}
+    {{- $portSuffix = toString $netpolPort }}
   {{- end }}
   {{- $metadata := dict "name" (printf "allow-ingress-to-%s-%s-from-ns-%s-pod-%s" $name $portSuffix $istioNamespace $istioGateway) "namespace" $ctx.Release.Namespace }}
   {{- if $route.metadata }}
@@ -37,8 +41,8 @@
   {{- $podSelector := dict "matchLabels" (dict "app.kubernetes.io/name" $istioGateway "istio" "ingressgateway") }}
   {{- $from := dict "namespaceSelector" $namespaceSelector "podSelector" $podSelector }}
   {{- $_ := set $ingress "from" (list $from) }}
-  {{- if $route.port }}
-    {{- $_ := set $ingress "ports" (list (dict "port" $route.port)) }}
+  {{- if $netpolPort }}
+    {{- $_ := set $ingress "ports" (list (dict "port" $netpolPort)) }}
   {{- end }}
   {{- $_ := set $spec "ingress" (list $ingress) }}
 
