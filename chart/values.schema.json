@@ -1205,6 +1205,17 @@
                   ],
                   "description": "Target service port number. Supports templating for string values."
                 },
+                "containerPort": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Target container/pod port number. Used for NetworkPolicy when different from service port. When omitted, defaults to port value. Supports templating for string values."
+                },
                 "metadata": {
                   "type": "object",
                   "description": "Metadata applied to all generated resources",

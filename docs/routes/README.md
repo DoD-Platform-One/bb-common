@@ -70,6 +70,7 @@ routes:
         - myapp.example.com
       service: my-app-service      # Target service name (supports templating)
       port: 8080                   # Target service port (supports templating)
+      containerPort: 3000          # Optional - container/pod port for NetworkPolicy (defaults to port)
       selector:                    # Optional - defaults to app.kubernetes.io/name: {route-key}
         app.kubernetes.io/name: my-app
       metadata:                    # Custom metadata for all generated resources
@@ -91,7 +92,9 @@ service mesh integration.
 
 **Optional:**
 
+- `containerPort`: Target container/pod port number - used for NetworkPolicy when different from service port. When omitted, defaults to `port` value. Supports templating.
 - `selector`: Pod selector labels - if omitted, defaults to `app.kubernetes.io/name: {route-key}`. NetworkPolicy and AuthorizationPolicy are automatically generated using this selector for enhanced security
+- `metadata`: Custom labels and annotations for all generated resources
 
 ## Prerequisites
 
@@ -195,6 +198,8 @@ spec:
         - port: 8080
           protocol: TCP
 ```
+
+> **Note**: By default, the NetworkPolicy uses the same port as specified in the `port` field (8080 in this example). If your service port differs from your container/pod port, use the `containerPort` field to specify the actual port the container is listening on. For example, if your service exposes port 80 but your container listens on 8080, set `port: 80` and `containerPort: 8080`. The VirtualService will use port 80, while the NetworkPolicy will use port 8080.
 
 #### AuthorizationPolicy
 
@@ -377,6 +382,32 @@ Apply custom labels and annotations to all generated resources using the metadat
 See [routes-labels-and-annotations.yaml](../../chart/tests/routes/values/routes-labels-and-annotations.yaml) for the complete configuration.
 
 > **Note**: Custom labels and annotations specified in the route metadata configuration are applied to all generated resources (VirtualService, ServiceEntry, NetworkPolicy, and AuthorizationPolicy).
+
+#### Service and Container Port Discrepancy
+
+When your Kubernetes service port differs from the actual container port, use `containerPort` to ensure NetworkPolicies target the correct port:
+
+```yaml
+routes:
+  inbound:
+    loki:
+      enabled: true
+      gateways:
+        - istio-gateway/public-ingressgateway
+      hosts:
+        - loki.dev.bigbang.mil
+      service: logging-loki-gateway.logging.svc.cluster.local
+      port: 80              # Service port (used in VirtualService)
+      containerPort: 8080   # Container port (used in NetworkPolicy)
+      selector:
+        app.kubernetes.io/name: logging-loki
+```
+
+This configuration creates:
+- A **VirtualService** that routes to the service on port **80**
+- A **NetworkPolicy** that allows traffic to the pods on port **8080**
+
+See [routes-container-port.yaml](../../chart/tests/routes/values/routes-container-port.yaml) for the complete configuration.
 
 ### Outbound Examples
 

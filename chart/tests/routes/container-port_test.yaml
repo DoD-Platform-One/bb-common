@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes Tests for Container Port Support
+templates:
+  - templates/routes/render.yaml
+set:
+  render: true
+  networkPolicies.enabled: true
+  istio.authorizationPolicies.enabled: true
+values:
+  - ./values/routes-container-port.yaml
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
+tests:
+  - it: should create a VirtualService using the service port
+    documentSelector:
+      path: metadata.name
+      value: loki
+    asserts:
+      - equal:
+          path: kind
+          value: VirtualService
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 80
+      - equal:
+          path: spec.http[0].route[0].destination.host
+          value: logging-loki-gateway.logging.svc.cluster.local
+  - it: should create a NetworkPolicy using the container port
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-loki-8080-from-ns-istio-gateway-pod-public-ingressgateway
+    asserts:
+      - equal:
+          path: kind
+          value: NetworkPolicy
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8080
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/name: logging-loki
