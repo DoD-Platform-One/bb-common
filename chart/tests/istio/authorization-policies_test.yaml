@@ -6,7 +6,9 @@ release:
   name: test
 set:
   istio:
+    enabled: true
     authorizationPolicies:
+      enabled: true
       generateFromNetpol: true
   networkPolicies:
     enabled: true
@@ -349,3 +351,63 @@ tests:
             selector:
               matchLabels:
                 app.kubernetes.io/name: myapp
+
+  - it: must not create any authorization policies when the istio feature is disabled
+    set:
+      istio:
+        enabled: false
+      networkPolicies:
+        ingress:
+          to:
+            myapp:8080:
+              from:
+                k8s:
+                  foo/bar: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+
+  - it: must not create any authorization policies when the istio.authorizationPolicies feature is disabled
+    set:
+      istio:
+        enabled: true
+        authorizationPolicies:
+          enabled: false
+      networkPolicies:
+        ingress:
+          to:
+            myapp:8080:
+              from:
+                k8s:
+                  foo/bar: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+      
+  - it: must not create any authorization policies when authpol generation from netpol is disabled
+    set:
+      istio:
+        enabled: true
+        authorizationPolicies:
+          enabled: true
+          generateFromNetpol: false
+      networkPolicies:
+        ingress:
+          to:
+            myapp:8080:
+              from:
+                k8s:
+                  foo/bar: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+
