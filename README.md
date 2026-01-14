@@ -108,6 +108,16 @@ Include templates in your chart:
 {{- include "bb-common.network-policies.render" . }}
 ```
 
+```yaml
+# templates/bigbang/istio.yaml
+{{- include "bb-common.istio.render" . }}
+```
+
+```yaml
+# templates/bigbang/routes.yaml
+{{- include "bb-common.routes.render" . }}
+```
+
 Configure directly in values:
 
 ```yaml
