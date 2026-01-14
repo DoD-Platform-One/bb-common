@@ -14,6 +14,45 @@ set:
       defaults:
         enabled: false
 tests:
+  - it: must deduplicate network policies with the same spec and generated name
+    set:
+      networkPolicies.ingress.to.app.from:
+        k8s:
+          someone@test/client: true
+          someone-else@test/client: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: allow-ingress-to-app-any-port-from-ns-test-pod-client
+
+  - it: must update names of duplicate network policies when specs differ
+    set:
+      networkPolicies.ingress.to.app.from:
+        k8s:
+          someone@test/client: true
+          someone-else@test/client:
+            enabled: true
+            podSelector:
+              matchLabels:
+                extra: label
+    asserts:
+      - hasDocuments:
+          count: 2
+      - hasDocuments:
+          filterAware: true
+          count: 1
+        documentSelector:
+          path: metadata.name
+          value: allow-ingress-to-app-any-port-from-ns-test-pod-client-deduped-0
+      - hasDocuments:
+          filterAware: true
+          count: 1
+        documentSelector:
+          path: metadata.name
+          value: allow-ingress-to-app-any-port-from-ns-test-pod-client-deduped-1
+
   - it: must not create any network policies when network policies are disabled
     set:
       networkPolicies.enabled: false

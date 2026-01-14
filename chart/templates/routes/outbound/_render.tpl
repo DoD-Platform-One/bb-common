@@ -14,6 +14,8 @@
     {{- end }}
   {{- end }}
 
+  {{- $resources = include "bb-common.utils.dedupe" $resources | fromYamlArray }}
+
   {{- range $resource := $resources }}
     {{- print "---" | nindent 0 }}
     {{- $resource | toYaml | nindent 0 }}
