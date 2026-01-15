@@ -17,6 +17,7 @@
     {{- end }}
 
     {{- $authzpols = concat $authzpols (include "bb-common.istio.authorization-policies.additional" $ctx | fromYamlArray) }}
+    {{- $authzpols = include "bb-common.utils.dedupe" $authzpols | fromYamlArray }}
 
     {{- range $authzpol := $authzpols }}
       {{- print "---" | nindent 0 }}

@@ -52,6 +52,8 @@
     {{- $netpols = concat $netpols (include "bb-common.network-policies.egress.defaults.render" $ctx | fromYamlArray) }}
   {{- end }}
 
+  {{- $netpols = include "bb-common.utils.dedupe" $netpols | fromYamlArray }}
+
   {{- range $netpol := $netpols }}
     {{- print "---" | nindent 0 }}
     {{- $netpol | toYaml | nindent 0 }}

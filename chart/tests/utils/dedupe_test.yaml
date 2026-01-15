@@ -1,0 +1,153 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: bb-common.utils.dedupe
+templates:
+- templates/utils/self-test.yaml
+tests:
+- it: must deduplicate names when the specs are different
+  set:
+    selfTest:
+      bb-common.utils.dedupe:
+        resultIsYaml: true
+        args:
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            thisDoesntMatter: true
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            neitherDoesThis: true
+  asserts:
+  - lengthEqual:
+      path: result
+      count: 2
+  - equal:
+      path: result[0].metadata.name
+      value: my-resource-deduped-0
+  - equal:
+      path: result[1].metadata.name
+      value: my-resource-deduped-1
+  - exists:
+      path: result[0].metadata.annotations
+  - exists:
+      path: result[1].metadata.annotations
+
+- it: must eliminate duplicates when both name and spec are the same
+  set:
+    selfTest:
+      bb-common.utils.dedupe:
+        resultIsYaml: true
+        args:
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            thisDoesntMatter: true
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            thisDoesntMatter: true
+  asserts:
+  - lengthEqual:
+      path: result
+      count: 1
+  - equal:
+      path: result[0].metadata.name
+      value: my-resource
+
+- it: must preserve order while deduplicating
+  set:
+    selfTest:
+      bb-common.utils.dedupe:
+        resultIsYaml: true
+        args:
+        - kind: NotARealResource
+          metadata:
+            name: resource-one
+          spec:
+            value: 1
+        - kind: NotARealResource
+          metadata:
+            name: resource-two
+          spec:
+            value: 2
+        - kind: NotARealResource
+          metadata:
+            name: resource-one
+          spec:
+            value: 1
+        - kind: NotARealResource
+          metadata:
+            name: resource-three
+          spec:
+            value: 3
+        - kind: NotARealResource
+          metadata:
+            name: resource-two
+          spec:
+            value: 2
+  asserts:
+  - lengthEqual:
+      path: result
+      count: 3
+  - equal:
+      path: result[0].metadata.name
+      value: resource-one
+  - equal:
+      path: result[1].metadata.name
+      value: resource-two
+  - equal:
+      path: result[2].metadata.name
+      value: resource-three
+
+- it: must handle an empty list
+  set:
+    selfTest:
+      bb-common.utils.dedupe:
+        resultIsYaml: true
+        args: []
+  asserts:
+  - lengthEqual:
+      path: result
+      count: 0
+
+- it: must handle multiple mixed specs among same-named resources
+  set:
+    selfTest:
+      bb-common.utils.dedupe:
+        resultIsYaml: true
+        args:
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            variant: A
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            variant: B
+        - kind: NotARealResource
+          metadata:
+            name: my-resource
+          spec:
+            variant: B
+  asserts:
+  - lengthEqual:
+      path: result
+      count: 2
+  - equal:
+      path: result[0].metadata.name
+      value: my-resource-deduped-0
+  - equal:
+      path: result[0].spec.variant
+      value: A
+  - equal:
+      path: result[1].metadata.name
+      value: my-resource-deduped-1
+  - equal:
+      path: result[1].spec.variant
+      value: B

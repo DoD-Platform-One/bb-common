@@ -78,6 +78,9 @@
     {{- $netpols = concat $netpols (include "bb-common.network-policies.ingress.defaults.render" $ctx | fromYamlArray) }}
   {{- end }}
 
+  {{- $netpols = include "bb-common.utils.dedupe" $netpols | fromYamlArray }}
+  {{- $authzpols = include "bb-common.utils.dedupe" $authzpols | fromYamlArray }}
+
   {{- range $netpol := $netpols }}
     {{- print "---" | nindent 0 }}
     {{- $netpol | toYaml | nindent 0 }}
