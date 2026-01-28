@@ -293,9 +293,10 @@ networkPolicies:
   #                 cidr: 192.168.0.0/16
 
 # Routes Configuration
-# # Istio VirtualService and gateway configuration for routing traffic to applications
+# # Istio VirtualService, Service Entries, and gateway configuration for routing traffic to applications
 # routes:
 #   # Inbound routes configuration
+#.  # Used to create virtual services to allow inbound traffic to applications
 #   inbound:
 #     # Simple web application routing
 #     my-app:
@@ -307,8 +308,22 @@ networkPolicies:
 #         - myapp.{{ .Values.domain }}   # Templated hostname
 #       service: my-app-service          # Target service name (supports templating)
 #       port: 8080                       # Target service port (supports templating)
+#       containerPort: 3000              # Optional - container/pod port for NetworkPolicy (defaults to port)
+#       passthrough:                     # Optional - section used only if virtual service belongs to a passthrough gateway
+#         enabled:                       # Optional - must set to true to configure virtual service properly when used with a passthrough gateway
+#         gatewayPort:                   # Optional - the https port of the passthrough gateway used; defaults to port 8443 if not specified 
 #       selector:                        # Optional - defaults to app.kubernetes.io/name: {route-key}
 #         app.kubernetes.io/name: my-app
 #       metadata:                        # Custom metadata for all generated resources
 #         labels: {}
 #         annotations: {}
+#.  # Used to create service entries for egress traffic from applications when used in istio sidecar mode with sidecars enabled
+#   outbound:
+#     database:
+#       enabled: true
+#       hosts:
+#         - db.example.com
+#       ports:
+#         - number: 5432
+#           name: postgres
+#           protocol: TCP

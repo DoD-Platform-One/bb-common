@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.14.0] - 2026-01-27
+
+### Added
+
+- Added ability to create virtual services used by passthrough gateways
+
 ## [0.13.0] - 2026-01-14
 
 ### Added
