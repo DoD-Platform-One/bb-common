@@ -31,11 +31,40 @@
     {{- $hosts = append $hosts (tpl . $ctx) }}
   {{- end }}
   {{- $_ := set $spec "hosts" $hosts }}
-
-  {{- if $route.http }}
+  
+  {{- if and $route.passthrough $route.passthrough.enabled }}
+    {{- $gatewayPort := $route.passthrough.gatewayPort | default "8443" | int }}
+    {{- $httpRoute := dict 
+      "route" (list (dict 
+        "destination" (dict 
+          "host" (tpl $route.service $ctx) 
+          "port" (dict 
+            "number" (tpl (toString $route.port) $ctx | int)
+          )
+        )
+      )
+    )}}
+    {{- $tlsEntry := dict 
+      "match" (list (dict 
+        "port" $gatewayPort 
+        "sniHosts" $hosts
+        )) 
+      "route" (index $httpRoute "route") 
+    -}}
+    {{- $_ := set $spec "tls" (list $tlsEntry) }}
+  {{- else if $route.http }}
     {{- $_ := set $spec "http" $route.http }}
   {{- else }}
-    {{- $httpRoute := dict "route" (list (dict "destination" (dict "host" (tpl $route.service $ctx) "port" (dict "number" (tpl (toString $route.port) $ctx | int))))) }}
+    {{- $httpRoute := dict 
+      "route" (list (dict 
+        "destination" (dict 
+          "host" (tpl $route.service $ctx) 
+          "port" (dict 
+            "number" (tpl (toString $route.port) $ctx | int)
+          )
+        )
+      )
+    )}}
     {{- $_ := set $spec "http" (list $httpRoute) }}
   {{- end }}
 

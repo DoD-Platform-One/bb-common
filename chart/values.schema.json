@@ -1216,6 +1216,20 @@
                   ],
                   "description": "Target container/pod port number. Used for NetworkPolicy when different from service port. When omitted, defaults to port value. Supports templating for string values."
                 },
+                "passthrough": {
+                  "type": "object",
+                  "description": "Section used when virtual service is using a passthrough gateway",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Configures the virtual service to use tls section with route underneath"
+                    },
+                    "gatewayPort": {
+                      "type": "integer",
+                      "description": "Set to https port of passthrough gateway; Defaults to port 8443 if left empty"
+                    }
+                  }
+                },
                 "metadata": {
                   "type": "object",
                   "description": "Metadata applied to all generated resources",

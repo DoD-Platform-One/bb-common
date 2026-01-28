@@ -1,0 +1,12 @@
+routes:
+  inbound:
+    webapp:
+      enabled: true
+      gateways:
+        - istio-gateway/passthrough-ingressgateway
+      hosts:
+        - webapp.company.com
+      service: webapp
+      port: 8080
+      passthrough:
+        enabled: true

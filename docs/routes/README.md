@@ -71,6 +71,9 @@ routes:
       service: my-app-service      # Target service name (supports templating)
       port: 8080                   # Target service port (supports templating)
       containerPort: 3000          # Optional - container/pod port for NetworkPolicy (defaults to port)
+      passthrough:                 # Optional - section used only if virtual service belongs to a passthrough gateway
+        enabled:                   # Optional - must set to true to configure virtual service properly when used with a passthrough gateway
+        gatewayPort:               # Optional - the https port of the passthrough gateway used; defaults to port 8443 if not specified 
       selector:                    # Optional - defaults to app.kubernetes.io/name: {route-key}
         app.kubernetes.io/name: my-app
       metadata:                    # Custom metadata for all generated resources
@@ -134,6 +137,31 @@ spec:
     - myapp.example.com
   http:
     - route:
+        - destination:
+            host: my-app-service
+            port:
+              number: 8080
+```
+
+When `passthrough.enabled` is set to `true` on the route, the SNI is used for routing instead of the HTTP host header. This is intended to be used when a workload is associated with a gateway that is in passthrough mode as TLS is terminated at the workload in this scenario:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  gateways:
+    - istio-gateway/passthrough-ingressgateway
+  hosts:
+    - myapp.example.com
+  tls:
+    - match:
+        - port: 8443
+          sniHosts:
+            - myapp.example.com
+      route:
         - destination:
             host: my-app-service
             port:
