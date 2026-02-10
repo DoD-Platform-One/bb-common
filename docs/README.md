@@ -5,6 +5,7 @@
 - **[Network Policies](network-policies/README.md)** - Comprehensive guide to
   the network policy framework including shorthand syntax, configuration
   examples, and migration guides.
+
 - **[Self Testing](self-test/README.md)** - Instructions for setting up and
   using the self-testing framework.
 
@@ -19,10 +20,7 @@
 - **[Resource Graph](RESOURCE_GRAPH.md)** - Visual representation of how
   bb-common components interact and generate Kubernetes resources.
 
-## Coming Soon
-
-Documentation for upcoming features:
-
-- Service Entries
-- Peer Authentications
-- Virtual Services
+- **[Migration Guide](MIGRATION_GUIDE.md)** - Full guide on migrating a package
+  with static resources for network policies, authorization policies, virtual services,
+  and service entries to using bb-common as a library chart to dynamically generate 
+  the same resources.
