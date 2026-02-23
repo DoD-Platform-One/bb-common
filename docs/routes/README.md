@@ -13,6 +13,7 @@ ingress traffic routing.
   - [Overview](#overview)
   - [Inbound Routes](#inbound-routes)
     - [Quick Start](#quick-start)
+    - [Resource Naming](#resource-naming)
     - [Generated Resources](#generated-resources)
       - [VirtualService](#virtualservice)
       - [ServiceEntry](#serviceentry)
@@ -92,6 +93,19 @@ service mesh integration.
 - `containerPort`: Target container/pod port number - used for NetworkPolicy when different from service port. When omitted, defaults to `port` value. Supports templating.
 - `selector`: Pod selector labels - if omitted, defaults to `app.kubernetes.io/name: {route-key}`. NetworkPolicy and AuthorizationPolicy are automatically generated using this selector for enhanced security
 - `metadata`: Custom labels and annotations for all generated resources
+
+### Resource Naming
+
+By default, route resources are named without the Helm release name prefix. When deploying multiple releases to the same namespace, enable `prependReleaseName` to avoid naming conflicts:
+
+```yaml
+routes:
+  prependReleaseName: true  # e.g. "my-release-myapp" instead of "myapp"
+  inbound:
+    myapp:
+      enabled: true
+      # ... route configuration
+```
 
 ## Prerequisites
 

@@ -20,6 +20,16 @@ istio:
   enabled: true
 ```
 
+### Resource Naming
+
+By default, Istio resources are named without the Helm release name prefix. When deploying multiple releases to the same namespace, enable `prependReleaseName` to avoid naming conflicts:
+
+```yaml
+istio:
+  enabled: true
+  prependReleaseName: true  # e.g. "my-release-default-peer-auth" instead of "default-peer-auth"
+```
+
 ## Resources Created
 
 ### NetworkPolicy

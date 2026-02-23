@@ -2,7 +2,7 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: {{ include "bb-common.network-policies.prepend-release-name" (list . "default-authz-allow-all-in-ns") }}
+  name: {{ include "bb-common.prepend-release-name" (list . "default-authz-allow-all-in-ns" "istio") | trim }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "bb-common.network-policies.default-labels" "authorization-policy" | nindent 4 }}

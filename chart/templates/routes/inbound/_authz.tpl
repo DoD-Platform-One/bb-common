@@ -12,7 +12,8 @@
   {{- $_ := set $authz "apiVersion" "security.istio.io/v1" }}
   {{- $_ := set $authz "kind" "AuthorizationPolicy" }}
 
-  {{- $metadata := dict "name" (printf "%s-%s-authz-policy" $name $istioGateway) "namespace" $ctx.Release.Namespace }}
+  {{- $resourceName := include "bb-common.prepend-release-name" (list $ctx (printf "%s-%s-authz-policy" $name $istioGateway) "routes") | trim }}
+  {{- $metadata := dict "name" $resourceName "namespace" $ctx.Release.Namespace }}
   {{- if $route.metadata }}
     {{- if $route.metadata.labels }}
       {{- $_ := set $metadata "labels" $route.metadata.labels }}

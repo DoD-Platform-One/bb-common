@@ -8,7 +8,8 @@
   {{- $_ := set $se "apiVersion" "networking.istio.io/v1" }}
   {{- $_ := set $se "kind" "ServiceEntry" }}
 
-  {{- $metadata := dict "name" (printf "%s-internal" $name) "namespace" $ctx.Release.Namespace }}
+  {{- $resourceName := include "bb-common.prepend-release-name" (list $ctx (printf "%s-internal" $name) "routes") | trim }}
+  {{- $metadata := dict "name" $resourceName "namespace" $ctx.Release.Namespace }}
   {{- if $route.metadata }}
     {{- if $route.metadata.labels }}
       {{- $_ := set $metadata "labels" $route.metadata.labels }}

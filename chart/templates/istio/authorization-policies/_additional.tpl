@@ -10,6 +10,7 @@
     {{- $_ := set $policy "apiVersion" "security.istio.io/v1" }}
     {{- $_ := set $policy "kind" "AuthorizationPolicy" }}
     {{- $name := default $policyName $policyConfig.name }}
+    {{- $name = include "bb-common.prepend-release-name" (list $ctx $name "istio") | trim }}
     {{- $metadata := dict "name" $name "namespace" $ctx.Release.Namespace }}
     {{- $labels := dict "authorization-policies.bigbang.dev/source" "bb-common" }}
     {{- if $policyConfig.labels }}

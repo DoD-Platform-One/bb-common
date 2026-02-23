@@ -15,7 +15,8 @@
       {{- $_ := set $resource "apiVersion" "security.istio.io/v1" }}
       {{- $_ := set $resource "kind" "AuthorizationPolicy" }}
 
-      {{- $metadata := dict "name" $policy.name "namespace" $ctx.Release.Namespace }}
+      {{- $name := include "bb-common.prepend-release-name" (list $ctx $policy.name "istio") | trim }}
+      {{- $metadata := dict "name" $name "namespace" $ctx.Release.Namespace }}
       {{- if $policy.labels }}
         {{- $_ := set $metadata "labels" $policy.labels }}
       {{- end }}

@@ -32,7 +32,7 @@
         {{- $netpol := include "bb-common.network-policies.new" (list $localKey $localConfig.podSelector "egress") | fromYaml }}
 
         {{- $name := printf "allow-egress-from-%s" $localName }}
-        {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
+        {{- $name = include "bb-common.prepend-release-name" (list $ctx $name "networkPolicies") }}
         {{- $labels := include "bb-common.network-policies.default-labels" "egress" | fromYaml }}
         {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 

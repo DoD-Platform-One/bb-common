@@ -8,7 +8,7 @@
     {{- $_ := set $sidecarResource "apiVersion" "networking.istio.io/v1" }}
     {{- $_ := set $sidecarResource "kind" "Sidecar" }}
 
-    {{- $metadata := dict "name" (printf "%s-sidecar" $ctx.Release.Name) "namespace" $ctx.Release.Namespace }}
+    {{- $metadata := dict "name" (include "bb-common.prepend-release-name" (list $ctx "sidecar" "istio") | trim) "namespace" $ctx.Release.Namespace }}
     {{- $_ := set $sidecarResource "metadata" $metadata }}
 
     {{- $spec := dict }}

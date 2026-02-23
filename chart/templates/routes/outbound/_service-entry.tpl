@@ -53,12 +53,13 @@
   {{- $_ := set $labels "service-entries.bigbang.dev/source" "bb-common" }}
   {{- $_ := set $annotations "outbound.service-entries.generated.bigbang.dev/from-route-name" $name }}
 
-  {{- $name := printf "%s-%s" $name (ternary "external" "internal" (eq $location "MESH_EXTERNAL")) }}
+  {{- $resourceName := printf "%s-%s" $name (ternary "external" "internal" (eq $location "MESH_EXTERNAL")) }}
+  {{- $resourceName = include "bb-common.prepend-release-name" (list $ctx $resourceName "routes") | trim }}
 
-  {{- $metadata := dict 
+  {{- $metadata := dict
     "labels" $labels
     "annotations" $annotations
-    "name" $name
+    "name" $resourceName
     "namespace" $ctx.Release.Namespace
   }}
 

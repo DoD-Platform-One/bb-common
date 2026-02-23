@@ -28,7 +28,7 @@
 
         {{- $netpol := include "bb-common.network-policies.new" (list $localParsed.name $localConfig.podSelector "ingress") | fromYaml }}
         {{- $name := printf "allow-ingress-to-%s" $localParsed.name }}
-        {{- $name = include "bb-common.network-policies.prepend-release-name" (list $ctx $name) }}
+        {{- $name = include "bb-common.prepend-release-name" (list $ctx $name "networkPolicies") }}
         {{- $labels := include "bb-common.network-policies.default-labels" "ingress" | fromYaml }}
         {{- $annotations := dict  "generated.network-policies.bigbang.dev/local-key" $localKey }}
 

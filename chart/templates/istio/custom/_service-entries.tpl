@@ -15,7 +15,8 @@
       {{- $_ := set $resource "apiVersion" "networking.istio.io/v1" }}
       {{- $_ := set $resource "kind" "ServiceEntry" }}
 
-      {{- $metadata := dict "name" $entry.name "namespace" $ctx.Release.Namespace }}
+      {{- $name := include "bb-common.prepend-release-name" (list $ctx $entry.name "istio") | trim }}
+      {{- $metadata := dict "name" $name "namespace" $ctx.Release.Namespace }}
       {{- if $entry.labels }}
         {{- $_ := set $metadata "labels" $entry.labels }}
       {{- end }}
