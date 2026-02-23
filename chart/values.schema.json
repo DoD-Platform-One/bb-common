@@ -45,6 +45,11 @@
           "description": "Enable Istio integration",
           "default": false
         },
+        "prependReleaseName": {
+          "type": "boolean",
+          "description": "Prepend release name to istio resource names",
+          "default": false
+        },
         "ambient": {
           "type": "object",
           "description": "Istio ambient configuration",
@@ -1053,6 +1058,11 @@
       "type": "object",
       "description": "Istio VirtualService and gateway configuration for routing traffic to applications",
       "properties": {
+        "prependReleaseName": {
+          "type": "boolean",
+          "description": "Prepend release name to route resource names",
+          "default": false
+        },
         "outbound": {
           "type": "object",
           "description": "Outbound routes configuration",

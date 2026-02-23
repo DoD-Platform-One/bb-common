@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "bb-common.network-policies.prepend-release-name" (list . "default-ingress-allow-ambient-kubelet") }}
+  name: {{ include "bb-common.prepend-release-name" (list . "default-ingress-allow-ambient-kubelet" "networkPolicies") }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "bb-common.network-policies.default-labels" "ingress" | nindent 4 }}

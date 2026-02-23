@@ -1,0 +1,253 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Routes prependReleaseName Tests
+templates:
+  - templates/routes/render.yaml
+release:
+  name: my-release
+  namespace: test-namespace
+capabilities:
+  apiVersions:
+    - networking.istio.io/v1
+    - security.istio.io/v1
+tests:
+  - it: should not prepend release name to inbound VirtualService when prependReleaseName is false
+    set:
+      routes.prependReleaseName: false
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: myapp
+    asserts:
+      - isKind:
+          of: VirtualService
+
+  - it: should prepend release name to inbound VirtualService when prependReleaseName is true
+    set:
+      routes.prependReleaseName: true
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: my-release-myapp
+    asserts:
+      - isKind:
+          of: VirtualService
+
+  - it: should not prepend release name to inbound ServiceEntry when prependReleaseName is false
+    set:
+      routes.prependReleaseName: false
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: myapp-internal
+    asserts:
+      - isKind:
+          of: ServiceEntry
+
+  - it: should prepend release name to inbound ServiceEntry when prependReleaseName is true
+    set:
+      routes.prependReleaseName: true
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: my-release-myapp-internal
+    asserts:
+      - isKind:
+          of: ServiceEntry
+
+  - it: should not prepend release name to inbound NetworkPolicy when prependReleaseName is false
+    set:
+      networkPolicies.enabled: true
+      routes.prependReleaseName: false
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: allow-ingress-to-myapp-8080-from-ns-istio-system-pod-public-ingressgateway
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+
+  - it: should prepend release name to inbound NetworkPolicy when prependReleaseName is true
+    set:
+      networkPolicies.enabled: true
+      routes.prependReleaseName: true
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: my-release-allow-ingress-to-myapp-8080-from-ns-istio-system-pod-public-ingressgateway
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+
+  - it: should not prepend release name to inbound AuthorizationPolicy when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      routes.prependReleaseName: false
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: myapp-public-ingressgateway-authz-policy
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should prepend release name to inbound AuthorizationPolicy when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      routes.prependReleaseName: true
+      routes.inbound:
+        myapp:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - myapp.example.com
+          service: myapp-svc
+          port: 8080
+    documentSelector:
+      path: metadata.name
+      value: my-release-myapp-public-ingressgateway-authz-policy
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should not prepend release name to outbound ServiceEntry when prependReleaseName is false
+    set:
+      routes.prependReleaseName: false
+      routes.outbound:
+        external-api:
+          enabled: true
+          hosts:
+            - api.example.com
+    documentSelector:
+      path: metadata.name
+      value: external-api-external
+    asserts:
+      - isKind:
+          of: ServiceEntry
+
+  - it: should prepend release name to outbound ServiceEntry when prependReleaseName is true
+    set:
+      routes.prependReleaseName: true
+      routes.outbound:
+        external-api:
+          enabled: true
+          hosts:
+            - api.example.com
+    documentSelector:
+      path: metadata.name
+      value: my-release-external-api-external
+    asserts:
+      - isKind:
+          of: ServiceEntry
+
+  - it: should handle multiple inbound routes with prependReleaseName true - app1 VirtualService
+    set:
+      routes.prependReleaseName: true
+      routes.inbound:
+        app1:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - app1.example.com
+          service: app1-svc
+          port: 8080
+        app2:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - app2.example.com
+          service: app2-svc
+          port: 9090
+    documentSelector:
+      path: metadata.name
+      value: my-release-app1
+    asserts:
+      - isKind:
+          of: VirtualService
+
+  - it: should handle multiple inbound routes with prependReleaseName true - app2 VirtualService
+    set:
+      routes.prependReleaseName: true
+      routes.inbound:
+        app1:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - app1.example.com
+          service: app1-svc
+          port: 8080
+        app2:
+          enabled: true
+          gateways:
+            - istio-system/public-ingressgateway
+          hosts:
+            - app2.example.com
+          service: app2-svc
+          port: 9090
+    documentSelector:
+      path: metadata.name
+      value: my-release-app2
+    asserts:
+      - isKind:
+          of: VirtualService

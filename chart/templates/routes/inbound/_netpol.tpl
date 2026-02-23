@@ -21,7 +21,8 @@
   {{- if $netpolPort }}
     {{- $portSuffix = toString $netpolPort }}
   {{- end }}
-  {{- $metadata := dict "name" (printf "allow-ingress-to-%s-%s-from-ns-%s-pod-%s" $name $portSuffix $istioNamespace $istioGateway) "namespace" $ctx.Release.Namespace }}
+  {{- $resourceName := include "bb-common.prepend-release-name" (list $ctx (printf "allow-ingress-to-%s-%s-from-ns-%s-pod-%s" $name $portSuffix $istioNamespace $istioGateway) "routes") | trim }}
+  {{- $metadata := dict "name" $resourceName "namespace" $ctx.Release.Namespace }}
   {{- if $route.metadata }}
     {{- if $route.metadata.labels }}
       {{- $_ := set $metadata "labels" $route.metadata.labels }}

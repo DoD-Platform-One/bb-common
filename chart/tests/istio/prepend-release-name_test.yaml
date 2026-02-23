@@ -1,0 +1,205 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Istio prependReleaseName Tests
+templates:
+  - templates/istio/render.yaml
+release:
+  name: my-release
+  namespace: test-namespace
+capabilities:
+  apiVersions:
+    - security.istio.io/v1
+    - networking.istio.io/v1
+tests:
+  - it: should not prepend release name to PeerAuthentication when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.prependReleaseName: false
+    documentSelector:
+      path: kind
+      value: PeerAuthentication
+    asserts:
+      - equal:
+          path: metadata.name
+          value: default-peer-auth
+
+  - it: should prepend release name to PeerAuthentication when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.prependReleaseName: true
+    documentSelector:
+      path: kind
+      value: PeerAuthentication
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-default-peer-auth
+
+  - it: should not prepend release name to Sidecar when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.sidecar.enabled: true
+      istio.prependReleaseName: false
+    documentSelector:
+      path: kind
+      value: Sidecar
+    asserts:
+      - equal:
+          path: metadata.name
+          value: sidecar
+
+  - it: should prepend release name to Sidecar when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.sidecar.enabled: true
+      istio.prependReleaseName: true
+    documentSelector:
+      path: kind
+      value: Sidecar
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-sidecar
+
+  - it: should not prepend release name to allow-nothing AuthorizationPolicy when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      istio.prependReleaseName: false
+    documentSelector:
+      path: metadata.name
+      value: default-authz-allow-nothing
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should prepend release name to allow-nothing AuthorizationPolicy when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      istio.prependReleaseName: true
+    documentSelector:
+      path: metadata.name
+      value: my-release-default-authz-allow-nothing
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should not prepend release name to allow-all-in-ns AuthorizationPolicy when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      istio.prependReleaseName: false
+    documentSelector:
+      path: metadata.name
+      value: default-authz-allow-all-in-ns
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should prepend release name to allow-all-in-ns AuthorizationPolicy when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      istio.prependReleaseName: true
+    documentSelector:
+      path: metadata.name
+      value: my-release-default-authz-allow-all-in-ns
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should not prepend release name to additional AuthorizationPolicies when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      istio.authorizationPolicies.defaults.enabled: false
+      istio.authorizationPolicies.additionalPolicies:
+        my-custom-policy:
+          spec:
+            action: ALLOW
+      istio.prependReleaseName: false
+    documentSelector:
+      path: metadata.name
+      value: my-custom-policy
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should prepend release name to additional AuthorizationPolicies when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.enabled: true
+      istio.authorizationPolicies.defaults.enabled: false
+      istio.authorizationPolicies.additionalPolicies:
+        my-custom-policy:
+          spec:
+            action: ALLOW
+      istio.prependReleaseName: true
+    documentSelector:
+      path: metadata.name
+      value: my-release-my-custom-policy
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should not prepend release name to custom ServiceEntries when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.serviceEntries.custom:
+        - name: external-api
+          spec:
+            hosts:
+              - api.example.com
+      istio.prependReleaseName: false
+    documentSelector:
+      path: metadata.name
+      value: external-api
+    asserts:
+      - isKind:
+          of: ServiceEntry
+
+  - it: should prepend release name to custom ServiceEntries when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.serviceEntries.custom:
+        - name: external-api
+          spec:
+            hosts:
+              - api.example.com
+      istio.prependReleaseName: true
+    documentSelector:
+      path: metadata.name
+      value: my-release-external-api
+    asserts:
+      - isKind:
+          of: ServiceEntry
+
+  - it: should not prepend release name to custom AuthorizationPolicies when prependReleaseName is false
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.custom:
+        - name: custom-authz
+          spec:
+            action: DENY
+      istio.prependReleaseName: false
+    documentSelector:
+      path: metadata.name
+      value: custom-authz
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy
+
+  - it: should prepend release name to custom AuthorizationPolicies when prependReleaseName is true
+    set:
+      istio.enabled: true
+      istio.authorizationPolicies.custom:
+        - name: custom-authz
+          spec:
+            action: DENY
+      istio.prependReleaseName: true
+    documentSelector:
+      path: metadata.name
+      value: my-release-custom-authz
+    asserts:
+      - isKind:
+          of: AuthorizationPolicy

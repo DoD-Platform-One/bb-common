@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Network Policies prependReleaseName Tests
+templates:
+  - templates/network-policies/render.yaml
+release:
+  name: my-release
+  namespace: test-namespace
+tests:
+  - it: should not prepend release name to default policies when prependReleaseName is false
+    set:
+      networkPolicies.enabled: true
+      networkPolicies.prependReleaseName: false
+    documentSelector:
+      path: metadata.name
+      value: default-egress-deny-all
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+
+  - it: should prepend release name to default policies when prependReleaseName is true
+    set:
+      networkPolicies.enabled: true
+      networkPolicies.prependReleaseName: true
+    documentSelector:
+      path: metadata.name
+      value: my-release-default-egress-deny-all
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+
+  - it: should not prepend release name to custom ingress policies when prependReleaseName is false
+    set:
+      networkPolicies.enabled: true
+      networkPolicies.prependReleaseName: false
+      networkPolicies.ingress.defaults.enabled: false
+      networkPolicies.egress.defaults.enabled: false
+      networkPolicies.ingress.to:
+        myapp:8080:
+          from:
+            k8s:
+              other-namespace/*: true
+    documentSelector:
+      path: kind
+      value: NetworkPolicy
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: ^allow-ingress-to-myapp
+
+  - it: should prepend release name to custom ingress policies when prependReleaseName is true
+    set:
+      networkPolicies.enabled: true
+      networkPolicies.prependReleaseName: true
+      networkPolicies.ingress.defaults.enabled: false
+      networkPolicies.egress.defaults.enabled: false
+      networkPolicies.ingress.to:
+        myapp:8080:
+          from:
+            k8s:
+              other-namespace/*: true
+    documentSelector:
+      path: kind
+      value: NetworkPolicy
+    asserts:
+      - matchRegex:
+          path: metadata.name
+          pattern: ^my-release-allow-ingress-to-myapp
+
+  - it: should default prependReleaseName to false when not specified
+    set:
+      networkPolicies.enabled: true
+      networkPolicies.ingress.defaults.enabled: false
+      networkPolicies.egress.defaults.enabled: true
+      networkPolicies.egress.defaults.denyAll.enabled: true
+      networkPolicies.egress.defaults.allowInNamespace.enabled: false
+      networkPolicies.egress.defaults.allowKubeDns.enabled: false
+      networkPolicies.egress.defaults.allowIstiod.enabled: false
+    documentSelector:
+      path: metadata.name
+      value: default-egress-deny-all
+    asserts:
+      - isKind:
+          of: NetworkPolicy
