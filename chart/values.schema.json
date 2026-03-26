@@ -1191,6 +1191,18 @@
                   },
                   "minItems": 1
                 },
+                "resolution": {
+                  "type": "string",
+                  "description": "DNS resolution strategy for the generated inbound ServiceEntry",
+                  "enum": [
+                    "DNS",
+                    "STATIC",
+                    "DNS_ROUND_ROBIN",
+                    "DYNAMIC_DNS",
+                    "NONE"
+                  ],
+                  "default": "DNS"
+                },
                 "hosts": {
                   "type": "array",
                   "description": "List of host/domain names for this route. Supports templating.",

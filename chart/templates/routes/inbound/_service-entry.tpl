@@ -27,7 +27,7 @@
   {{- end }}
   {{- $_ := set $spec "hosts" $hosts }}
   {{- $_ := set $spec "location" "MESH_EXTERNAL" }}
-  {{- $_ := set $spec "resolution" "DNS" }}
+  {{- $_ := set $spec "resolution" (default "DNS" $route.resolution | upper) }}
 
   {{- $ports := list }}
   {{- $httpsPort := dict "name" "https" "number" 443 "protocol" "HTTPS" }}
